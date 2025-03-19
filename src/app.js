@@ -21,7 +21,7 @@ export default app;
 
 
 // Routes
-import usersRoute from './routes/users.routes.js';
+import usersRoute from './routes/user.routes.js';
 
 
 app.use(usersRoute);
