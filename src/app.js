@@ -21,6 +21,10 @@ export default app;
 
 
 // Routes
+import usersRoute from './routes/users.routes.js';
+
+
+app.use(usersRoute);
 
 
 app.use((err, req, res, next) => {
