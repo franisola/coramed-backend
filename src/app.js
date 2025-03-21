@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 
 // Routes
-import usersRoute from '../routes/user.routes.js';
+import usersRoute from './routes/user.routes.js';
 
 
 app.use(usersRoute);
