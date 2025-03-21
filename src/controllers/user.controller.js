@@ -1,43 +1,50 @@
 import User from '../models/user.model.js';
+
 import bcrypt from 'bcryptjs';
 import { createAccessToken } from '../jwt/jwt.js';
 
 export const createUser = async (req, res, next) => {
 	const { nombre, apellido, email, password, telefono, rol, fecha_nacimiento } = req.body;
-
+  
 	try {
-		const passwordHashed = await bcrypt.hash(password, 10);
-		const newUser = await User.create({
-			nombre,
-			apellido,
-			email,
-			password: passwordHashed,
-			telefono,
-			rol,
-			fecha_nacimiento,
-		});
-
-		const userSaved = await newUser.save();
-		const token = await createAccessToken({
-			id: userSaved._id,
-			email: userSaved.email,
-			role: userSaved.role,
-		});
-
-		const { password: hashedPassword, ...user } = userSaved._doc;
-
-		const expires = new Date(Date.now() + 24 * 3600000);
-
-		res.cookie('token', token, {
-			expires,
-			sameSite: 'None',
-			secure: true,
-		});
-		res.status(200).json(user);
+	  // Crear el usuario en la base de datos
+	  const newUser = await User.create({
+		nombre,
+		apellido,
+		email,
+		password, // El middleware en el modelo se encargará de encriptar esta contraseña
+		telefono,
+		rol,
+		fecha_nacimiento,
+	  });
+  
+	  // Generar un token de acceso para el usuario
+	  const token = await createAccessToken({
+		id: newUser._id,
+		email: newUser.email,
+		role: newUser.rol,
+	  });
+  
+	  // Excluir la contraseña del usuario en la respuesta
+	  const { password: hashedPassword, ...userData } = newUser._doc;
+  
+	  // Configurar la cookie con el token
+	  const expires = new Date(Date.now() + 24 * 3600000); // 1 día
+	  res.cookie('token', token, {
+		expires,
+		sameSite: 'None',
+		secure: true,
+	  });
+  
+	  // Responder con los datos del usuario
+	  return res.status(201).json({
+		success: true,
+		user: userData,
+	  });
 	} catch (error) {
-		next(error);
+	  next(error);
 	}
-};
+  };
 
 export const loginUser = async (req, res, next) => {
 	const { email, password } = req.body;
@@ -92,6 +99,8 @@ export const getUserProfile = async (req, res, next) => {
 		let user = { user: userFound };
 
 		return res.json(user);
+
+		
 	} catch (error) {
 		next(error);
 	}

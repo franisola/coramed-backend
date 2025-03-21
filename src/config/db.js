@@ -1,4 +1,4 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 // Cargar las variables de entorno desde el archivo .env
@@ -6,34 +6,31 @@ dotenv.config();
 
 const uri = process.env.MONGO_URI; // Leer la URI desde las variables de entorno
 
-
-
-// Validar que MONGO_URI esté definido
+// Validar que la URI esté definida
 if (!uri) {
-  throw new Error('MONGO_URI no está definido en las variables de entorno');
+  throw new Error('MONGO_URI no está definida en las variables de entorno');
 }
 
-// Crear un cliente de MongoDB con opciones
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
+// Función para conectar a la base de datos
+export const connectDB = async () => {
+  try {
+    // Conectar a MongoDB
+    await mongoose.connect(uri); // Sin opciones obsoletas
+    console.log('Conexión exitosa a MongoDB');
+  } catch (error) {
+    console.error('Error al conectar con MongoDB:', error.message);
+    process.exit(1); // Salir del proceso si no se puede conectar
+  }
+};
+
+// Evento para manejar la desconexión
+mongoose.connection.on('disconnected', () => {
+  console.log('Desconectado de MongoDB');
 });
 
-export const connectDB = async () => {
-	try {
-	  // Conectar el cliente al servidor
-	  await client.connect();
-	  // Enviar un ping para confirmar la conexión
-	  await client.db("admin").command({ ping: 1 });
-	  console.log("Pinged your deployment. You successfully connected to MongoDB!");
-	} catch (error) {
-	  console.error("Error al conectar con MongoDB:", error.message);
-	  throw error;
-	} finally {
-	  // Asegurarse de cerrar el cliente al finalizar/error
-	  await client.close();
-	}
-  };
+// Evento para manejar errores en la conexión
+mongoose.connection.on('error', (error) => {
+  console.error('Error en la conexión a MongoDB:', error.message);
+});
+
+export default connectDB;
