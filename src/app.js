@@ -36,7 +36,7 @@ import usersRoute from './routes/user.routes.js';
 app.use(usersRoute);
 
 app.get('/', (req, res) => {
-  res.send('Santi sos re puto');
+  res.send('Valen sos re puto');
 });
 
 app.use((err, req, res, next) => {
