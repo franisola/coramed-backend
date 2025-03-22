@@ -39,6 +39,10 @@ app.get('/', (req, res) => {
   res.send('Valen sos re puto');
 });
 
+app.get('/Maca', (req, res) => {
+	res.send('Maca, te amo <3');
+});
+
 app.use((err, req, res, next) => {
 	const statusCode = err.statusCode || 500;
 	const error = err || 'Internal Server Error';
