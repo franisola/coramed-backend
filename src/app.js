@@ -35,6 +35,10 @@ import usersRoute from './routes/user.routes.js';
 
 app.use(usersRoute);
 
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
 app.use((err, req, res, next) => {
 	const statusCode = err.statusCode || 500;
 	const error = err || 'Internal Server Error';
