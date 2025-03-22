@@ -10,20 +10,9 @@ export default app;
 const allowedOrigins = [
 	'http://localhost:3000', // Origen para desarrollo local
 	'https://backsalud-tp.up.railway.app/', // Origen para producción (reemplaza con tu dominio real)
-  ];
+];
   
-  app.use(cors({
-	origin: (origin, callback) => {
-	  // Permitir solicitudes sin origen (por ejemplo, Postman) o desde orígenes permitidos
-	  if (!origin || allowedOrigins.includes(origin)) {
-		callback(null, true);
-	  } else {
-		callback(new Error('No permitido por CORS'));
-	  }
-	},
-	credentials: true, // Permitir envío de cookies
-  }));
-
+app.use(cors())
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
