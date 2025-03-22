@@ -8,24 +8,32 @@ export default app;
 
 // Midlewares
 const allowedOrigins = [
-	'http://localhost:3000', // Origen para desarrollo local
-	'https://backsalud-tp.up.railway.app/', // Origen para producción (reemplaza con tu dominio real)
+	'http://localhost:3000', // Desarrollo local
+	'https://backsalud-tp.up.railway.app', // Producción
 ];
-  
-app.use(cors())
+
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			if (!origin || allowedOrigins.includes(origin)) {
+				callback(null, true);
+			} else {
+				callback(new Error('No permitido por CORS'));
+			}
+		},
+		credentials: true, // Permitir envío de cookies
+	})
+);
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-
-
 // Routes
 import usersRoute from './routes/user.routes.js';
 
-
 app.use(usersRoute);
-
 
 app.use((err, req, res, next) => {
 	const statusCode = err.statusCode || 500;
