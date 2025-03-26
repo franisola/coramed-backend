@@ -3,10 +3,6 @@ import * as userController from '../controllers/user.controller.js';
 
 const router = Router();
 
-// Autenticación
-router.post('/register', userController.createUser);
-router.post('/login', userController.loginUser);
-router.post('/recover-password', userController.recoverPassword);
 
 // CRUD (protegido)
 router.get('/users/:id', userController.getUserProfile);
