@@ -38,12 +38,14 @@ const UserSchema = new mongoose.Schema(
 			type: String,
 			trim: true,
 			unique: true,
+			sparse: true,
 			validate: {
 				validator: function (v) {
 					return /^[0-9]{7,8}$/.test(v); // Solo números, 7 u 8 dígitos
 				},
 				message: 'El DNI debe contener entre 7 y 8 dígitos',
 			},
+
 		},
 		genero: {
 			type: String,
