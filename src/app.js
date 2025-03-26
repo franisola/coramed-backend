@@ -31,10 +31,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // Routes
+import authRoute from './routes/auth.routes.js';
 import usersRoute from './routes/user.routes.js';
 
+app.use(authRoute);
 app.use(usersRoute);
-
 
 
 app.use((err, req, res, next) => {
