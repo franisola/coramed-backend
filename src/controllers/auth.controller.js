@@ -10,7 +10,10 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET; // Asegúrate de definir esto en 
 // Crear un nuevo usuario (solo campos requeridos)
 export const createUser = async (req, res, next) => {
     try {
-        const { nombre, apellido, email, password } = req.body;
+        let { nombre, apellido, email, password } = req.body;
+
+        // Normalizar el email a minúsculas
+        email = email.toLowerCase();
 
         // Validar que los campos obligatorios estén presentes
         if (!nombre || !apellido || !email || !password) {
@@ -33,6 +36,17 @@ export const createUser = async (req, res, next) => {
 
         await newUser.save();
 
+        // Generar un token
+        const token = jwt.sign({ id: newUser._id, email: newUser.email }, TOKEN_SECRET, { expiresIn: '1d' });
+
+        // Configurar la cookie con el token
+        res.cookie('token', token, {
+            httpOnly: true, // La cookie no es accesible desde JavaScript
+            secure: process.env.NODE_ENV === 'production', // Solo en HTTPS en producción
+            sameSite: 'strict', // Evita ataques CSRF
+            maxAge: 24 * 60 * 60 * 1000, // 1 día
+        });
+
         return res.status(201).json({ message: 'Usuario creado exitosamente.' });
     } catch (error) {
         next(error);
@@ -42,7 +56,10 @@ export const createUser = async (req, res, next) => {
 // Iniciar sesión
 export const loginUser = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        let { email, password } = req.body;
+
+        // Normalizar el email a minúsculas
+        email = email.toLowerCase();
 
         // Validar que los campos obligatorios estén presentes
         if (!email || !password) {
@@ -64,7 +81,15 @@ export const loginUser = async (req, res, next) => {
         // Generar un token
         const token = jwt.sign({ id: user._id, email: user.email }, TOKEN_SECRET, { expiresIn: '1d' });
 
-        return res.status(200).json({ message: 'Inicio de sesión exitoso.', token });
+        // Configurar la cookie con el token
+        res.cookie('token', token, {
+            httpOnly: true, // La cookie no es accesible desde JavaScript
+            secure: process.env.NODE_ENV === 'production', // Solo en HTTPS en producción
+            sameSite: 'strict', // Evita ataques CSRF
+            maxAge: 24 * 60 * 60 * 1000, // 1 día
+        });
+
+        return res.status(200).json({ message: 'Inicio de sesión exitoso.' });
     } catch (error) {
         next(error);
     }
@@ -94,4 +119,10 @@ export const recoverPassword = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+};
+
+// Cerrar sesión
+export const logoutUser = (req, res) => {
+    res.clearCookie('token');
+    return res.status(200).json({ message: 'Sesión cerrada exitosamente.' });
 };
