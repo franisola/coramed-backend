@@ -8,6 +8,8 @@ const router = Router();
 router.post('/register', auth.authNotRequired, authController.createUser);
 router.post('/login', auth.authNotRequired, authController.loginUser);
 router.post('/recover-password', auth.authNotRequired, authController.recoverPassword);
+router.post('/reset-password', auth.authNotRequired, authController.resetPassword);
+// Cerrar sesión
 router.post('/logout', auth.authRequired, authController.logoutUser);
 
 export default router;

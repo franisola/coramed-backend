@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js'; // Modelo de usuario
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -95,7 +96,15 @@ export const loginUser = async (req, res, next) => {
     }
 };
 
-// Recuperar contraseña
+// Cerrar sesión
+export const logoutUser = (req, res) => {
+    res.clearCookie('token');
+    return res.status(200).json({ message: 'Sesión cerrada exitosamente.' });
+};
+
+
+
+
 export const recoverPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
@@ -105,15 +114,42 @@ export const recoverPassword = async (req, res, next) => {
             return res.status(400).json({ message: 'El correo electrónico es obligatorio.' });
         }
 
+        // Normalizar el email a minúsculas
+        const normalizedEmail = email.toLowerCase();
+
         // Verificar si el usuario existe
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(404).json({ message: 'Usuario no encontrado.' });
         }
 
-        // Aquí puedes implementar la lógica para enviar un correo de recuperación
-        // Por ejemplo, generar un token de recuperación y enviarlo por correo
-        // const recoveryToken = jwt.sign({ id: user._id }, TOKEN_SECRET, { expiresIn: '1h' });
+        // Generar un token de recuperación
+        const recoveryToken = jwt.sign({ id: user._id }, TOKEN_SECRET, { expiresIn: '1h' });
+
+        // Configurar el transporte de correo (usando Gmail)
+        const transporter = nodemailer.createTransport({
+            service: 'gmail', // Usar Gmail como proveedor
+            auth: {
+                user: process.env.EMAIL_USER, // Tu correo de Gmail
+                pass: process.env.EMAIL_PASS, // Contraseña o token de aplicación
+            },
+        });
+
+        // Configurar el contenido del correo
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: normalizedEmail,
+            subject: 'Recuperación de contraseña',
+            html: `
+                <p>Hola ${user.nombre},</p>
+                <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
+                <a href="${process.env.CLIENT_URL}/reset-password/${recoveryToken}">Restablecer contraseña</a>
+                <p>Este enlace es válido por 1 hora.</p>
+            `,
+        };
+
+        // Enviar el correo
+        await transporter.sendMail(mailOptions);
 
         return res.status(200).json({ message: 'Se ha enviado un correo para recuperar la contraseña.' });
     } catch (error) {
@@ -121,8 +157,36 @@ export const recoverPassword = async (req, res, next) => {
     }
 };
 
-// Cerrar sesión
-export const logoutUser = (req, res) => {
-    res.clearCookie('token');
-    return res.status(200).json({ message: 'Sesión cerrada exitosamente.' });
+
+export const resetPassword = async (req, res, next) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        // Validar que el token y la nueva contraseña estén presentes
+        if (!token || !newPassword) {
+            return res.status(400).json({ message: 'El token y la nueva contraseña son obligatorios.' });
+        }
+
+        // Verificar el token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, TOKEN_SECRET);
+        } catch (error) {
+            return res.status(400).json({ message: 'El token es inválido o ha expirado.' });
+        }
+
+        // Buscar al usuario por ID
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+
+        // Actualizar la contraseña
+        user.password = newPassword; // Será cifrada automáticamente por el middleware en el modelo
+        await user.save();
+
+        return res.status(200).json({ message: 'Contraseña restablecida exitosamente.' });
+    } catch (error) {
+        next(error);
+    }
 };
