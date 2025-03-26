@@ -35,13 +35,7 @@ import usersRoute from './routes/user.routes.js';
 
 app.use(usersRoute);
 
-app.get('/', (req, res) => {
-  res.send('Axel sos re puto');
-});
 
-app.get('/Maca', (req, res) => {
-	res.send('Maca, te amo <3');
-});
 
 app.use((err, req, res, next) => {
 	const statusCode = err.statusCode || 500;

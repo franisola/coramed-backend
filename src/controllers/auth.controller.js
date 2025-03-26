@@ -1,6 +1,15 @@
 import bcrypt from 'bcryptjs';
 import { createAccessToken } from '../jwt/jwt.js';
 
+
+export const me = async (req, res, next) => {
+	try {
+		return res.status(200).json({message: 'User found'});
+	} catch (error) {
+		next(error);
+	}
+}
+
 export const createUser = async (req, res, next) => {
 	try{		
 		return res.status(200).json({message: 'User created'});
