@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET; // Asegúrate de definir esto en tu archivo .env
 
