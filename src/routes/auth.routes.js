@@ -12,4 +12,7 @@ router.post('/reset-password', auth.authNotRequired, authController.resetPasswor
 // Cerrar sesión
 router.post('/logout', auth.authRequired, authController.logoutUser);
 
+// Dar de baja la cuenta
+router.delete("/delete-account", auth.authRequired, authController.deleteAccount);
+
 export default router;
