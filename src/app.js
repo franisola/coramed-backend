@@ -31,11 +31,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // Routes
-import authRoute from './routes/auth.routes.js';
-import usersRoute from './routes/user.routes.js';
-
-app.use(authRoute);
-app.use(usersRoute);
+import routes from './routes/main.routes.js';
+app.use('/api', routes);
 
 
 app.use((err, req, res, next) => {

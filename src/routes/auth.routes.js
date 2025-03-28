@@ -1,18 +1,25 @@
-import { Router } from 'express';
-import * as authController from '../controllers/auth.controller.js';
-import * as auth from '../jwt/auth.service.js';
+import { Router } from "express";
+import * as authController from "../controllers/auth.controller.js";
+import { authRequired, authNotRequired } from "../jwt/auth.service.js";
 
 const router = Router();
 
-// Autenticación
-router.post('/register', auth.authNotRequired, authController.createUser);
-router.post('/login', auth.authNotRequired, authController.loginUser);
-router.post('/recover-password', auth.authNotRequired, authController.recoverPassword);
-router.post('/reset-password', auth.authNotRequired, authController.resetPassword);
-// Cerrar sesión
-router.post('/logout', auth.authRequired, authController.logoutUser);
+// Crear un nuevo usuario
+router.post("/register", authNotRequired, authController.createUser);
 
-// Dar de baja la cuenta
-router.delete("/delete-account", auth.authRequired, authController.deleteAccount);
+// Iniciar sesión
+router.post("/login", authNotRequired, authController.loginUser);
+
+// Recuperar contraseña
+router.post("/recover-password", authNotRequired, authController.recoverPassword);
+
+// Restablecer contraseña
+router.post("/reset-password", authNotRequired, authController.resetPassword);
+
+// Cerrar sesión (requiere autenticación)
+router.post("/logout", authRequired, authController.logoutUser);
+
+// Eliminar la cuenta del usuario (requiere autenticación)
+router.delete("/delete-account", authRequired, authController.deleteAccount);
 
 export default router;

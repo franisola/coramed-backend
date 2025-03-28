@@ -1,18 +1,18 @@
-import { Router } from 'express';
-import * as userController from '../controllers/user.controller.js';
+import { Router } from "express";
+import * as userController from "../controllers/user.controller.js";
+import { authRequired } from "../jwt/auth.service.js";
 
 const router = Router();
 
-
-// CRUD (protegido)
-router.get('/users/:id', userController.getUserProfile);
-router.put('/users/:id', userController.updateUserProfile);
-router.delete('/users/:id', userController.deleteUser);
+// Perfil del usuario (protegido)
+router.get("/profile", authRequired, userController.getUserProfile);
+router.put("/profile", authRequired, userController.updateUserProfile);
+router.delete("/profile", authRequired, userController.deleteUser);
 
 // Historial de turnos (protegido)
-router.get('/users/:id/turnos', userController.getUserAppointments);
+router.get("/profile/turnos", authRequired, userController.getUserAppointments);
 
 // Notificaciones (protegido)
-router.get('/users/:id/notificaciones', userController.getUserNotifications);
+router.get("/profile/notificaciones", authRequired, userController.getUserNotifications);
 
 export default router;
