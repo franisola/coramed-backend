@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-const ObraSocialSchema = new mongoose.Schema(
+const HealthInsuranceSchema = new mongoose.Schema(
     {
         nombre: {
             type: String,
@@ -39,11 +39,11 @@ const ObraSocialSchema = new mongoose.Schema(
 );
 
 // Middleware para cifrar el número de socio antes de guardar
-ObraSocialSchema.pre("save", async function (next) {
+HealthInsuranceSchema.pre("save", async function (next) {
     if (!this.isModified("numero_socio") || this.numero_socio === "") return next(); // Solo cifrar si el campo fue modificado y no está vacío
     const salt = await bcrypt.genSalt(10);
     this.numero_socio = await bcrypt.hash(this.numero_socio, salt);
     next();
 });
 
-export default mongoose.model("ObraSocial", ObraSocialSchema);
+export default mongoose.model("HealthInsurance", HealthInsuranceSchema);

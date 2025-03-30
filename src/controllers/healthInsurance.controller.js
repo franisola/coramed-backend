@@ -1,7 +1,7 @@
-import ObraSocial from "../models/healthInsurance.model.js";
+import HealthInsurance from "../models/healthInsurance.model.js";
 import User from "../models/user.model.js";
 
-// Obtener la obra social del usuario
+// Get the user's health insurance
 export const getHealthInsurance = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -17,7 +17,7 @@ export const getHealthInsurance = async (req, res, next) => {
     }
 };
 
-// Crear o actualizar la obra social del usuario
+// Create or update the user's health insurance
 export const upsertHealthInsurance = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -28,33 +28,33 @@ export const upsertHealthInsurance = async (req, res, next) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        let obraSocial = user.obra_social
-            ? await ObraSocial.findById(user.obra_social)
-            : new ObraSocial();
+        let healthInsurance = user.obra_social
+            ? await HealthInsurance.findById(user.obra_social)
+            : new HealthInsurance();
 
-        // Actualizar o asignar los campos
-        if (nombre) obraSocial.nombre = nombre;
+        // Update or assign the fields
+        if (nombre) healthInsurance.nombre = nombre;
         if (numero_socio) {
-            obraSocial.numero_socio = numero_socio;
-            obraSocial.numero_socio_visible = numero_socio; // Guardar la versión visible
+            healthInsurance.numero_socio = numero_socio;
+            healthInsurance.numero_socio_visible = numero_socio; // Save the visible version
         }
-        if (plan) obraSocial.plan = plan;
+        if (plan) healthInsurance.plan = plan;
 
-        await obraSocial.save();
+        await healthInsurance.save();
 
-        // Asociar la obra social al usuario si es nueva
+        // Associate the health insurance with the user if it's new
         if (!user.obra_social) {
-            user.obra_social = obraSocial._id;
+            user.obra_social = healthInsurance._id;
             await user.save();
         }
 
-        res.status(200).json({ message: "Obra social guardada exitosamente", obraSocial });
+        res.status(200).json({ message: "Obra social guardada exitosamente", healthInsurance });
     } catch (error) {
         next(error);
     }
 };
 
-// Eliminar la obra social del usuario
+// Delete the user's health insurance
 export const deleteHealthInsurance = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -64,7 +64,7 @@ export const deleteHealthInsurance = async (req, res, next) => {
             return res.status(404).json({ message: "Obra social no encontrada" });
         }
 
-        await ObraSocial.findByIdAndDelete(user.obra_social);
+        await HealthInsurance.findByIdAndDelete(user.obra_social);
         user.obra_social = null;
         await user.save();
 
