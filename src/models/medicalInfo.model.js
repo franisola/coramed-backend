@@ -51,4 +51,4 @@ const MedicalInfoSchema = new mongoose.Schema(
     { timestamps: true } // Automatically adds createdAt and updatedAt
 );
 
-export default mongoose.model("MedicalInfo", MedicalInfoSchema);
+export default mongoose.model("MedicalInfo", MedicalInfoSchema, "medical_infos");

@@ -46,4 +46,4 @@ HealthInsuranceSchema.pre("save", async function (next) {
     next();
 });
 
-export default mongoose.model("HealthInsurance", HealthInsuranceSchema);
+export default mongoose.model("HealthInsurance", HealthInsuranceSchema, "health_insurances");
