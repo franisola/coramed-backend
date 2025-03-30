@@ -1,4 +1,6 @@
 import Appointment from "../models/appointment.model.js";
+import Professional from "../models/professional.model.js";
+import {calculateBaseSchedules} from "../utils/calculateBaseSchedules.js";
 
 // Get a specific appointment
 export const getAppointmentById = async (req, res, next) => {
@@ -30,9 +32,23 @@ export const createAppointment = async (req, res, next) => {
             return res.status(400).json({ message: "Ya existe un turno en esta fecha y hora con este profesional" });
         }
 
+        const professional = await Professional.findById(profesional);
+        if (!professional) {
+            return res.status(404).json({ message: "Profesional no encontrado" });
+        }
+
+        const baseSchedules = calculateBaseSchedules(professional.horarios_laborales);
+        const isScheduleAvailable = baseSchedules.includes(hora); 
+        
+        if (!isScheduleAvailable) {
+            return res.status(400).json({ message: "Horario no disponible" });
+        }
+
+
         const newAppointment = new Appointment({
             paciente,
             profesional,
+            especialidad: professional.especialidad,
             fecha,
             hora,
             motivo_consulta,

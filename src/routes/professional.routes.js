@@ -6,6 +6,7 @@ import {
     getAvailableSchedules,
     updateProfessional,
     deleteProfessional,
+    getProfessionalById,
 } from "../controllers/profesional.controller.js";
 
 const router = Router();
@@ -37,6 +38,13 @@ router.get("/specialty/:especialidad", getProfessionalsBySpecialty);
  * @access Public
  */
 router.get("/:profesionalId/schedules", getAvailableSchedules);
+
+/**
+ * @route GET /professionals/:profesionalId
+ * @desc Get a professional by ID
+ * @access Public
+ */
+router.get("/:profesionalId", getProfessionalById);
 
 /**
  * @route PUT /professionals/:profesionalId

@@ -25,7 +25,7 @@ const ProfessionalSchema = new mongoose.Schema(
         dias_laborales: {
             type: [String],
             required: [true, "Los días laborales son obligatorios"],
-            enum: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+            enum: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
             validate: {
                 validator: function (dias) {
                     return dias.length > 0;
