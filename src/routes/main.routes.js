@@ -1,25 +1,47 @@
 import { Router } from "express";
 import userRoutes from "./user.routes.js";
-import obraSocialRoutes from "./obraSocial.routes.js";
-import infoMedicaRoutes from "./infoMedica.routes.js";
+import healthInsuranceRoutes from "./healthInsurance.routes.js";
+import medicalInfoRoutes from "./medicalInfo.routes.js";
 import authRoutes from "./auth.routes.js";
-import turnoRoutes from "./turno.routes.js";
+import appointmentRoutes from "./appointment.routes.js";
+import professionalRoutes from "./professional.routes.js"; 
 
 const router = Router();
 
-// Rutas de autenticación
+/**
+ * @route /auth
+ * @desc Authentication routes
+ */
 router.use("/auth", authRoutes);
 
-// Rutas de usuario
+/**
+ * @route /user
+ * @desc User routes
+ */
 router.use("/user", userRoutes);
 
-// Rutas de obra social
-router.use("/obra-social", obraSocialRoutes);
+/**
+ * @route /health-insurance
+ * @desc Health insurance routes
+ */
+router.use("/health-insurance", healthInsuranceRoutes);
 
-// Rutas de información médica
-router.use("/info-medica", infoMedicaRoutes);
+/**
+ * @route /medical-info
+ * @desc Medical information routes
+ */
+router.use("/medical-info", medicalInfoRoutes);
 
-// Rutas de turnos
-router.use("/turnos", turnoRoutes);
+/**
+ * @route /appointments
+ * @desc Appointment routes
+ */
+router.use("/appointments", appointmentRoutes);
+
+/**
+ * @route /professionals
+ * @desc Professional routes
+ */
+router.use("/professionals", professionalRoutes);
 
 export default router;

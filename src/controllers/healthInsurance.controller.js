@@ -1,4 +1,4 @@
-import ObraSocial from "../models/obraSocial.model.js";
+import ObraSocial from "../models/healthInsurance.model.js";
 import User from "../models/user.model.js";
 
 // Obtener la obra social del usuario
@@ -33,9 +33,12 @@ export const upsertHealthInsurance = async (req, res, next) => {
             : new ObraSocial();
 
         // Actualizar o asignar los campos
-        obraSocial.nombre = nombre || obraSocial.nombre;
-        obraSocial.numero_socio = numero_socio || obraSocial.numero_socio;
-        obraSocial.plan = plan || obraSocial.plan;
+        if (nombre) obraSocial.nombre = nombre;
+        if (numero_socio) {
+            obraSocial.numero_socio = numero_socio;
+            obraSocial.numero_socio_visible = numero_socio; // Guardar la versión visible
+        }
+        if (plan) obraSocial.plan = plan;
 
         await obraSocial.save();
 

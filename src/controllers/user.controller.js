@@ -1,39 +1,27 @@
 import User from "../models/user.model.js";
-import Turno from "../models/turno.model.js";
+import Appointment from "../models/appointment.model.js";
 
-
-// Obtener el perfil del usuario
+// Get the user's profile
 export const getUserProfile = async (req, res, next) => {
     try {
-        const userId = req.user.id; // ID del usuario autenticado
+        const userId = req.user.id;
 
-        // Buscar al usuario y poblar las referencias a informacion_medica y obra_social
-        const user = await User.findById(userId)
-            .populate("informacion_medica")
-            .populate("obra_social")
-            .select("-password"); // Excluir la contraseña
+        const user = await User.findById(userId).select("-password");
 
         if (!user) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        // Manejar casos donde informacion_medica u obra_social sean null
-        const response = {
-            ...user.toObject(),
-            informacion_medica: user.informacion_medica || null,
-            obra_social: user.obra_social || null,
-        };
-
-        res.status(200).json(response);
+        res.status(200).json(user);
     } catch (error) {
         next(error);
     }
 };
 
-// Actualizar el perfil del usuario
+// Update the user's profile
 export const updateUserProfile = async (req, res, next) => {
     try {
-        const userId = req.user.id; // ID del usuario autenticado
+        const userId = req.user.id;
         const { nombre, apellido, fecha_nacimiento, genero, direccion, telefono } = req.body;
 
         const user = await User.findById(userId);
@@ -42,7 +30,6 @@ export const updateUserProfile = async (req, res, next) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        // Actualizar los campos permitidos (excluyendo el email)
         user.nombre = nombre || user.nombre;
         user.apellido = apellido || user.apellido;
         user.fecha_nacimiento = fecha_nacimiento || user.fecha_nacimiento;
@@ -58,10 +45,10 @@ export const updateUserProfile = async (req, res, next) => {
     }
 };
 
-// Eliminar la cuenta del usuario
+// Delete the user's account
 export const deleteUser = async (req, res, next) => {
     try {
-        const userId = req.user.id; // ID del usuario autenticado
+        const userId = req.user.id;
 
         const user = await User.findById(userId);
 
@@ -77,46 +64,28 @@ export const deleteUser = async (req, res, next) => {
     }
 };
 
-
-// Obtener los turnos del usuario divididos en próximos y anteriores
+// Get the user's appointments, divided into upcoming and past
 export const getUserAppointments = async (req, res, next) => {
     try {
-        const userId = req.user.id; // ID del usuario autenticado
-        const fechaActual = new Date(); // Fecha actual
+        const userId = req.user.id;
+        const currentDate = new Date();
 
-        // Buscar todos los turnos del usuario
-        const turnos = await Turno.find({ paciente: userId })
-            .populate("profesional", "nombre apellido especialidad") // Información del profesional
-            .sort({ fecha: 1, hora: 1 }); // Ordenar por fecha y hora
+        const appointments = await Appointment.find({ paciente: userId })
+            .populate("profesional", "nombre apellido especialidad")
+            .sort({ fecha: 1, hora: 1 });
 
-        // Dividir los turnos en próximos y anteriores
-        const turnosAnteriores = turnos.filter(
-            (turno) => turno.fecha < fechaActual || turno.estado === "Completado"
+        const pastAppointments = appointments.filter(
+            (appointment) => appointment.fecha < currentDate || appointment.estado === "Completado"
         );
 
-        const turnosProximos = turnos.filter(
-            (turno) => turno.fecha >= fechaActual && turno.estado !== "Completado"
+        const upcomingAppointments = appointments.filter(
+            (appointment) => appointment.fecha >= currentDate && appointment.estado !== "Completado"
         );
 
         res.status(200).json({
-            anteriores: turnosAnteriores,
-            proximos: turnosProximos,
+            anteriores: pastAppointments,
+            proximos: upcomingAppointments,
         });
-    } catch (error) {
-        next(error);
-    }
-};
-
-
-// Obtener las notificaciones del usuario
-export const getUserNotifications = async (req, res, next) => {
-    try {
-        const userId = req.user.id; // ID del usuario autenticado
-
-        const notificaciones = await Notificacion.find({ usuario: userId })
-            .sort({ createdAt: -1 }); // Ordenar por las más recientes
-
-        res.status(200).json(notificaciones);
     } catch (error) {
         next(error);
     }
