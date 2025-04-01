@@ -13,10 +13,6 @@ export const createAppointment = async (req, res, next) => {
 
         const now = new Date(); // Fecha y hora actual
 
-        // Validar que la fecha proporcionada sea futura o actual
-        if (new Date(fecha) < now) {
-            return res.status(400).json({ message: "La fecha del turno debe ser futura o actual" });
-        }
 
         // Buscar al profesional por ID
         const professional = await Professional.findById(profesional);
