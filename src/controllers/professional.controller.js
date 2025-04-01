@@ -1,6 +1,6 @@
 import Professional from "../models/professional.model.js";
 import Appointment from "../models/appointment.model.js";
-import {calculateBaseSchedules} from "../utils/calculateBaseSchedules.js";
+import {calculateBaseSchedules} from "../utils/validationUtils.js";
 import moment from "moment";
 import "moment/locale/es.js"; // Importa el idioma español
 
@@ -109,8 +109,12 @@ export const getAvailableSchedules = async (req, res, next) => {
         // Calcular los horarios base
         const baseSchedules = calculateBaseSchedules(professional.horarios_laborales);
 
-        // Buscar citas existentes para el profesional en la fecha proporcionada
-        const appointments = await Appointment.find({ profesional: profesionalId, fecha });
+        // Buscar citas existentes para el profesional en la fecha proporcionada, solo las que están "Agendadas"
+        const appointments = await Appointment.find({
+            profesional: profesionalId,
+            fecha,
+            estado: "Agendado" // Filtrar solo las citas que están agendadas
+        });
 
         // Obtener los horarios ocupados
         const occupiedSchedules = appointments.map(appointment => appointment.hora);
@@ -123,6 +127,7 @@ export const getAvailableSchedules = async (req, res, next) => {
         next(error);
     }
 };
+
 
 // Update a professional
 export const updateProfessional = async (req, res, next) => {

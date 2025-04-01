@@ -27,6 +27,7 @@ const UserSchema = new mongoose.Schema(
             required: [true, "La contraseña es obligatoria"],
             trim: true,
             minlength: [6, "La contraseña debe tener al menos 6 caracteres"],
+            maxlength: [100, "La contraseña no puede tener más de 100 caracteres"],
         },
         fecha_nacimiento: {
             type: Date,

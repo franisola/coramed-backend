@@ -7,16 +7,11 @@ import {
     updateProfessional,
     deleteProfessional,
     getProfessionalById,
-} from "../controllers/profesional.controller.js";
+} from "../controllers/professional.controller.js";
 
 const router = Router();
 
-/**
- * @route POST /professionals
- * @desc Create a new professional
- * @access Public
- */
-router.post("/", createProfessional);
+//Public
 
 /**
  * @route GET /professionals/specialties
@@ -45,6 +40,16 @@ router.get("/:profesionalId/schedules", getAvailableSchedules);
  * @access Public
  */
 router.get("/:profesionalId", getProfessionalById);
+
+
+//Private
+
+/**
+ * @route POST /professionals
+ * @desc Create a new professional
+ * @access Public
+ */
+router.post("/", createProfessional);
 
 /**
  * @route PUT /professionals/:profesionalId

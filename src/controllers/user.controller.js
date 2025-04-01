@@ -45,25 +45,6 @@ export const updateUserProfile = async (req, res, next) => {
     }
 };
 
-// Delete the user's account
-export const deleteUser = async (req, res, next) => {
-    try {
-        const userId = req.user.id;
-
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
-        }
-
-        await User.findByIdAndDelete(userId);
-
-        res.status(200).json({ message: "Cuenta eliminada exitosamente" });
-    } catch (error) {
-        next(error);
-    }
-};
-
 // Get the user's appointments, divided into upcoming and past
 export const getUserAppointments = async (req, res, next) => {
     try {
@@ -86,6 +67,25 @@ export const getUserAppointments = async (req, res, next) => {
             anteriores: pastAppointments,
             proximos: upcomingAppointments,
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Delete the user's account
+export const deleteUser = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).json({ message: "Cuenta eliminada exitosamente" });
     } catch (error) {
         next(error);
     }

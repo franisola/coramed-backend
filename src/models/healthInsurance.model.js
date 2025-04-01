@@ -12,7 +12,7 @@ const HealthInsuranceSchema = new mongoose.Schema(
         },
         numero_socio: {
             type: String,
-            default: "",
+            required: [true, "El número de socio es obligatorio"], // Ahora es obligatorio
             trim: true,
             validate: {
                 validator: function (v) {
@@ -30,7 +30,7 @@ const HealthInsuranceSchema = new mongoose.Schema(
         },
         plan: {
             type: String,
-            default: "",
+            required: [true, "El plan es obligatorio"], // Ahora es obligatorio
             trim: true,
             maxlength: [30, "El plan no puede tener más de 30 caracteres"],
         },

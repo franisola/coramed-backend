@@ -1,6 +1,11 @@
 import { Router } from "express";
 import * as medicalInfoController from "../controllers/medicalInfo.controller.js";
 import { authRequired } from "../jwt/auth.service.js";
+import { validateSchema } from "../middlewares/validator.middleware.js";
+import {
+    upsertMedicalInfoSchema,
+    deleteMedicalInfoSchema,
+} from "../schemas/medicalInfo.schema.js";
 
 const router = Router();
 
@@ -16,13 +21,23 @@ router.get("/", authRequired, medicalInfoController.getMedicalInfo);
  * @desc Create or update the user's medical information
  * @access Private
  */
-router.put("/", authRequired, medicalInfoController.upsertMedicalInfo);
+router.put(
+    "/",
+    authRequired,
+    validateSchema(upsertMedicalInfoSchema), // Valida req.body
+    medicalInfoController.upsertMedicalInfo
+);
 
 /**
  * @route DELETE /medical-info
  * @desc Delete the user's medical information
  * @access Private
  */
-router.delete("/", authRequired, medicalInfoController.deleteMedicalInfo);
+router.delete(
+    "/",
+    authRequired,
+    validateSchema(deleteMedicalInfoSchema), // Valida req.body (aunque no requiere datos)
+    medicalInfoController.deleteMedicalInfo
+);
 
 export default router;
