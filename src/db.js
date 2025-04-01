@@ -6,6 +6,7 @@ dotenv.config();
 
 const uri = process.env.MONGO_URI; // Read the URI from environment variables
 
+
 // Validate that the URI is defined
 if (!uri) {
   throw new Error('MONGO_URI no está definida en las variables de entorno'); // Error message in Spanish

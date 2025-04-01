@@ -12,13 +12,10 @@ export const createAppointmentSchema = z.object({
     fecha: z.string().refine((fecha) => {
         const inputDate = new Date(fecha);
         return inputDate > new Date();
-    }, "La fecha del turno debe ser futura o actual"),
+    }, "La fecha del turno debe ser futura o actuallll"),
     hora: z.string()
         .nonempty("La hora es obligatoria")
         .regex(/^\d{2}:\d{2}$/, "El formato de hora debe ser HH:mm"),
-    estado: z.enum(["Agendado", "Cancelado", "Completado"], {
-        required_error: "El estado es obligatorio",
-    }),
     motivo_consulta: z.string()
         .nonempty("El motivo de consulta es obligatorio")
         .min(10, "El motivo de consulta debe tener al menos 10 caracteres")
