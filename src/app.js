@@ -33,7 +33,9 @@ app.use(cookieParser()); // Parse cookies
 // Routes
 import routes from './routes/main.routes.js';
 app.use('/api', routes); // Mount main routes under /api
-
+app.use('/', (req, res) => {
+    return res.json("hola como estas?")
+} )  
 // Error handling middleware
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
