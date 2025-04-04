@@ -2,9 +2,9 @@ import { z } from "zod";
 
 // Esquema para crear o actualizar la información médica
 export const upsertMedicalInfoSchema = z.object({
-    grupo_sanguineo: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], {
-        required_error: "El grupo sanguíneo es obligatorio",
-    }),
+    grupo_sanguineo: z
+        .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
+        .optional(),
     alergias: z
         .array(z.string().max(50, "Cada alergia debe tener un máximo de 50 caracteres"))
         .max(10, "No puedes tener más de 10 alergias registradas")
