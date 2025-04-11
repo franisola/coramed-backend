@@ -75,11 +75,11 @@ const UserSchema = new mongoose.Schema(
         },
         informacion_medica: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "InfoMedica", // Relation with the InfoMedica model
+            ref: "MedicalInfo", // Relation with the InfoMedica model
         },
         obra_social: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "ObraSocial", // Relation with the ObraSocial model
+            ref: "HealthInsurance", // Relation with the ObraSocial model
         },
     },
     {

@@ -11,9 +11,6 @@ export const createAppointment = async (req, res, next) => {
     try {
         const { paciente, profesional, fecha, hora, motivo_consulta, notas_medicas } = req.body;
 
-        const now = new Date(); // Fecha y hora actual
-
-
         // Buscar al profesional por ID
         const professional = await Professional.findById(profesional);
         if (!professional) {
