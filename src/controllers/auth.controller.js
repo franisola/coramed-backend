@@ -13,10 +13,10 @@ export const getSessionUser = async (req, res, next) => {
 		const user = await User.findById(req.user.id).select('-password');
 
 		if (!user) {
-			return res.status(404).json({ message: 'Usuario no encontrado' });
+			return res.status(404).json({ message: 'Usuario no encontrado', logued: false });
 		}
 
-		res.status(200).json(user);
+		res.status(200).json(user, { logued: true });
 	} catch (error) {
 		next(error);
 	}
@@ -56,7 +56,7 @@ export const createUser = async (req, res, next) => {
 			maxAge: 24 * 60 * 60 * 1000, // 1 day
 		});
 
-		return res.status(201).json({ message: 'Usuario creado exitosamente.' });
+		return res.status(201).json({ user: user, message: 'Usuario creado exitosamente.' });
 	} catch (error) {
 		// Handle model errors
 		if (error.name === 'ValidationError') {
@@ -98,7 +98,7 @@ export const loginUser = async (req, res, next) => {
 			sameSite: 'strict',
 			maxAge: 24 * 60 * 60 * 1000, // 1 día
 		});
-		return res.status(200).json({ message: 'Login exitoso.' });
+		return res.status(200).json({ user: user, message: 'Login exitoso.' });
 	} catch (error) {
 		next(error);
 	}
