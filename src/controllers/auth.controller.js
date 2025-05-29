@@ -16,7 +16,7 @@ export const getSessionUser = async (req, res, next) => {
 			return res.status(404).json({ message: 'Usuario no encontrado', logued: false });
 		}
 
-		res.status(200).json(user, { logued: true });
+		res.status(200).json( { user: user, logued: true });
 	} catch (error) {
 		next(error);
 	}
