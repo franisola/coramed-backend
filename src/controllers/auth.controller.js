@@ -28,6 +28,14 @@ export const createUser = async (req, res, next) => {
 		const { dni, email, password, genero, nombreCompleto } = req.body;
 		const normalizedEmail = email.toLowerCase();
 
+        const existingUser = await User.findOne({ email: normalizedEmail });
+
+        if (existingUser) {
+            const error = new Error('Ya existe un usuario con este correo electrónico.');
+			error.statusCode = 404;
+			return next(error);
+		}
+
 		const newUser = new User({
 			dni,
 			email: normalizedEmail,
