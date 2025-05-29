@@ -22,6 +22,8 @@ export const getSessionUser = async (req, res, next) => {
 	}
 };
 
+
+
 // Create a new user
 export const createUser = async (req, res, next) => {
 	try {

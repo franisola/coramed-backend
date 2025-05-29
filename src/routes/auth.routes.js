@@ -73,7 +73,11 @@ router.delete(
 	validateSchema(deleteUserSchema),
 	authController.deleteAccount
 );
-
-router.get('/me', authRequired, authController.getSessionUser);
+/**
+ * @route GET /auth/me
+ * @desc Get the user's profile
+ * @access Private
+ */
+router.get('/meee', authRequired, authController.getSessionUser);
 
 export default router;
