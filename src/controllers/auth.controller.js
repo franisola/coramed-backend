@@ -56,7 +56,7 @@ export const createUser = async (req, res, next) => {
 			maxAge: 24 * 60 * 60 * 1000, // 1 day
 		});
 
-        const { createdAt, updateAt, ...safeUser } = user.toObject(); 
+        const { createdAt, updateAt, ...safeUser } = newUser.toObject(); 
         delete safeUser.password; 
 
 
