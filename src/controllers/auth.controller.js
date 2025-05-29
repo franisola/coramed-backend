@@ -56,7 +56,13 @@ export const createUser = async (req, res, next) => {
 			maxAge: 24 * 60 * 60 * 1000, // 1 day
 		});
 
-		return res.status(201).json({ user: user, message: 'Usuario creado exitosamente.' });
+        const { createdAt, updateAt, ...safeUser } = user.toObject(); 
+        delete safeUser.password; 
+
+
+		// return res.status(201).json({ user: safeUser, message: 'Usuario creado exitosamente.' });
+		return res.status(201).json({ message: 'Usuario creado exitosamente.' });
+
 	} catch (error) {
 		// Handle model errors
 		if (error.name === 'ValidationError') {
@@ -98,7 +104,15 @@ export const loginUser = async (req, res, next) => {
 			sameSite: 'strict',
 			maxAge: 24 * 60 * 60 * 1000, // 1 día
 		});
-		return res.status(200).json({ user: user, message: 'Login exitoso.' });
+
+
+        const { createdAt, updateAt, ...safeUser } = user.toObject(); 
+        delete safeUser.password; 
+
+
+		// return res.status(200).json({ user: safeUser, message: 'Login exitoso.' });
+		return res.status(200).json({ message: 'Login exitoso.' });
+
 	} catch (error) {
 		next(error);
 	}
