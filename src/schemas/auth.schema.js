@@ -5,11 +5,11 @@ export const registerUserSchema = z.object({
 	nombreCompleto: z
 		.string()
 		.min(1, 'El nombre completo es obligatorio.')
-		.refine((val) => val.trim().split(' ').length >= 2, {
-			message: 'Ingresá al menos nombre y apellido.',
-		})
 		.regex(/^[a-zA-ZÀ-ÿ\s]+$/, {
 			message: 'Solo se permiten letras y espacios.',
+		})
+		.refine((val) => val.trim().split(' ').length >= 2, {
+			message: 'Ingresá al menos nombre y apellido.',
 		}),
 	email: z
 		.string()
