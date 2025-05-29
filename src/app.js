@@ -9,7 +9,8 @@ export default app;
 // Middleware configuration
 const allowedOrigins = [
     'http://localhost:3000', // Local development
-    'https://backsalud-tp.up.railway.app', // Production
+    'https://backsalud-tp.up.railway.app',
+    'https://backsalud.onrender.com' // Production
 ];
 
 app.use(

@@ -1,14 +1,14 @@
-import { Router } from "express";
-import * as authController from "../controllers/auth.controller.js";
-import { authRequired, authNotRequired } from "../jwt/auth.service.js";
-import { validateSchema } from "../middlewares/validator.middleware.js";
+import { Router } from 'express';
+import * as authController from '../controllers/auth.controller.js';
+import { authRequired, authNotRequired } from '../jwt/auth.service.js';
+import { validateSchema } from '../middlewares/validator.middleware.js';
 import {
-    registerUserSchema,
-    loginUserSchema,
-    recoverPasswordSchema,
-    resetPasswordSchema,
-    deleteUserSchema,
-} from "../schemas/auth.schema.js";
+	registerUserSchema,
+	loginUserSchema,
+	recoverPasswordSchema,
+	resetPasswordSchema,
+	deleteUserSchema,
+} from '../schemas/auth.schema.js';
 
 const router = Router();
 
@@ -18,10 +18,10 @@ const router = Router();
  * @access Public
  */
 router.post(
-    "/register",
-    authNotRequired,
-    validateSchema(registerUserSchema),
-    authController.createUser
+	'/register',
+	authNotRequired,
+	validateSchema(registerUserSchema),
+	authController.createUser
 );
 
 /**
@@ -29,12 +29,7 @@ router.post(
  * @desc Log in
  * @access Public
  */
-router.post(
-    "/login",
-    authNotRequired,
-    validateSchema(loginUserSchema),
-    authController.loginUser
-);
+router.post('/login', authNotRequired, validateSchema(loginUserSchema), authController.loginUser);
 
 /**
  * @route POST /auth/recover-password
@@ -42,10 +37,10 @@ router.post(
  * @access Public
  */
 router.post(
-    "/recover-password",
-    authNotRequired,
-    validateSchema(recoverPasswordSchema),
-    authController.recoverPassword
+	'/recover-password',
+	authNotRequired,
+	validateSchema(recoverPasswordSchema),
+	authController.recoverPassword
 );
 
 /**
@@ -54,10 +49,10 @@ router.post(
  * @access Public
  */
 router.post(
-    "/reset-password",
-    authNotRequired,
-    validateSchema(resetPasswordSchema),
-    authController.resetPassword
+	'/reset-password',
+	authNotRequired,
+	validateSchema(resetPasswordSchema),
+	authController.resetPassword
 );
 
 /**
@@ -65,7 +60,7 @@ router.post(
  * @desc Log out
  * @access Private
  */
-router.post("/logout", authRequired, authController.logoutUser);
+router.post('/logout', authRequired, authController.logoutUser);
 
 /**
  * @route DELETE /auth/delete-account
@@ -73,10 +68,12 @@ router.post("/logout", authRequired, authController.logoutUser);
  * @access Private
  */
 router.delete(
-    "/delete-account",
-    authRequired,
-    validateSchema(deleteUserSchema),
-    authController.deleteAccount
+	'/delete-account',
+	authRequired,
+	validateSchema(deleteUserSchema),
+	authController.deleteAccount
 );
+
+router.get('/me', authRequired, getSessionUser);
 
 export default router;

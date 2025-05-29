@@ -22,7 +22,7 @@ export const getUserProfile = async (req, res, next) => {
 export const updateUserProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const { nombre, apellido, fecha_nacimiento, genero, direccion, telefono } = req.body;
+        const { nombre, apellido, fechaNacimiento, genero, direccion, telefono } = req.body;
 
         const user = await User.findById(userId);
 
@@ -32,7 +32,7 @@ export const updateUserProfile = async (req, res, next) => {
 
         user.nombre = nombre || user.nombre;
         user.apellido = apellido || user.apellido;
-        user.fecha_nacimiento = fecha_nacimiento || user.fecha_nacimiento;
+        user.fechaNacimiento = fechaNacimiento || user.fechaNacimiento;
         user.genero = genero || user.genero;
         user.direccion = direccion || user.direccion;
         user.telefono = telefono || user.telefono;
