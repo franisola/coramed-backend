@@ -14,7 +14,7 @@ const router = Router();
  * @desc Get the user's profile
  * @access Private
  */
-// router.get("/profile", authRequired, userController.getUserProfile);
+router.get("/profile", authRequired, userController.getUserProfile);
 
 /**
  * @route PUT /user/profile
