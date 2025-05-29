@@ -17,27 +17,38 @@ const getTokenFromRequest = (req) => {
     return req.cookies?.[TOKEN_COOKIE_NAME] || req.headers.authorization?.split(' ')[1];
 };
 
+
 export const authNotRequired = (req, res, next) => {
-    const token = getTokenFromRequest(req);
-    if (token) {
-        return res.status(401).json({ message: 'Ya tienes una sesión activa.' });
-    }
-    next();
+  const token = getTokenFromRequest(req);
+  if (token) {
+    const error = new Error('Ya tienes una sesión activa.');
+    error.statusCode = 401;
+    return next(error);
+  }
+  next();
 };
 
+
+
 export const authRequired = (req, res, next) => {
-    const token = getTokenFromRequest(req);
-    if (!token) {
-        return res.status(401).json({ message: 'Acceso denegado.' });
+  const token = getTokenFromRequest(req);
+  if (!token) {
+    const error = new Error('Acceso denegado.');
+    error.statusCode = 401;
+    return next(error);
+  }
+  try {
+    const decoded = jwt.verify(token, TOKEN_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      const err = new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      err.statusCode = 403;
+      return next(err);
     }
-    try {
-        const decoded = jwt.verify(token, TOKEN_SECRET);
-        req.user = decoded;
-        next();
-    } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            return res.status(403).json({ message: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.' });
-        }
-        return res.status(403).json({ message: 'Token inválido.' });
-    }
+    const err = new Error('Token inválido.');
+    err.statusCode = 403;
+    return next(err);
+  }
 };
