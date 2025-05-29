@@ -13,6 +13,14 @@ import {
 const router = Router();
 
 /**
+ * @route GET /auth/me
+ * @desc Get the user's profile
+ * @access Private
+ */
+router.get('/me', authRequired, authController.getSessionUser);
+
+
+/**
  * @route POST /auth/register
  * @desc Register a new user
  * @access Public
@@ -73,11 +81,6 @@ router.delete(
 	validateSchema(deleteUserSchema),
 	authController.deleteAccount
 );
-/**
- * @route GET /auth/me
- * @desc Get the user's profile
- * @access Private
- */
-router.get('/meee', authRequired, authController.getSessionUser);
+
 
 export default router;
