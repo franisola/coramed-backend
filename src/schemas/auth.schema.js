@@ -30,7 +30,7 @@ export const registerUserSchema = z.object({
 		.trim(),
 	genero: z.enum(['Masculino', 'Femenino', 'Otro'], 'El género debe ser válido'),
 
-	fecha_nacimiento: z.undefined(),
+	fechaNacimiento: z.undefined(),
 	telefono: z.undefined(),
 	direccion: z.undefined(),
 });
