@@ -39,9 +39,6 @@ export const createUser = async (req, res, next) => {
 			password, // Will be hashed automatically by the middleware in the model
 			genero,
 			nombreCompleto,
-			fechaNacimiento, // Optional
-			direccion, // Optional
-			telefono, // Optional
 		});
 
 		await newUser.save();
