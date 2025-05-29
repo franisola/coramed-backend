@@ -1,52 +1,53 @@
 import Appointment from "../models/appointment.model.js";
 import Professional from "../models/professional.model.js";
-import {calculateBaseSchedules} from "../utils/validationUtils.js";
+import { calculateBaseSchedules } from "../utils/validationUtils.js";
 import moment from "moment";
-import "moment/locale/es.js"; // Importa el idioma español
-moment.locale("es"); // Configura el idioma a español
-
+import "moment/locale/es.js"; 
+moment.locale("es");
 
 // Create a new appointment
 export const createAppointment = async (req, res, next) => {
     try {
         const { paciente, profesional, fecha, hora, motivo_consulta, notas_medicas } = req.body;
 
-        // Buscar al profesional por ID
         const professional = await Professional.findById(profesional);
         if (!professional) {
-            return res.status(404).json({ message: "Profesional no encontrado" });
+            const error = new Error('Profesional no encontrado');
+            error.statusCode = 404;
+            return next(error);
         }
 
-        // Validar que el día de la semana sea laboral para el profesional
         let dayOfWeek = moment(fecha).format("dddd");
         dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
         if (!professional.dias_laborales.includes(dayOfWeek)) {
-            return res.status(400).json({ message: `El profesional no trabaja el día ${dayOfWeek}` });
+            const error = new Error(`El profesional no trabaja el día ${dayOfWeek}`);
+            error.statusCode = 400;
+            return next(error);
         }
 
-        // Calcular los horarios base del profesional
         const baseSchedules = calculateBaseSchedules(professional.horarios_laborales);
         const isScheduleAvailable = baseSchedules.includes(hora);
 
-        // Validar si el horario está dentro del rango del profesional
         if (!isScheduleAvailable) {
-            return res.status(400).json({ message: "Horario no disponible" });
+            const error = new Error("Horario no disponible");
+            error.statusCode = 400;
+            return next(error);
         }
 
-        // Validar si ya existe un turno en la misma fecha y hora con el mismo profesional
         const existingAppointment = await Appointment.findOne({
             profesional,
             fecha,
             hora,
-            estado: "Agendado" // Solo considerar turnos que están "Agendados"
+            estado: "Agendado"
         });
 
         if (existingAppointment) {
-            return res.status(400).json({ message: "Ya existe un turno en esta fecha y hora con este profesional" });
+            const error = new Error("Ya existe un turno en esta fecha y hora con este profesional");
+            error.statusCode = 400;
+            return next(error);
         }
 
-        // Crear el nuevo turno
         const newAppointment = new Appointment({
             paciente,
             profesional,
@@ -54,7 +55,7 @@ export const createAppointment = async (req, res, next) => {
             fecha,
             hora,
             motivo_consulta,
-            notas_medicas // Campo opcional
+            notas_medicas
         });
 
         await newAppointment.save();
@@ -75,7 +76,9 @@ export const getAppointmentById = async (req, res, next) => {
             .populate("paciente", "nombre apellido email");
 
         if (!appointment) {
-            return res.status(404).json({ message: "Turno no encontrado" });
+            const error = new Error('Turno no encontrado');
+            error.statusCode = 404;
+            return next(error);
         }
 
         res.status(200).json(appointment);
@@ -90,24 +93,26 @@ export const updateAppointmentStatus = async (req, res, next) => {
         const { appointmentId } = req.params;
         const { estado } = req.body;
 
-        // Validar que el estado sea válido
         if (!["Agendado", "Cancelado", "Completado"].includes(estado)) {
-            return res.status(400).json({ message: "Estado inválido" });
+            const error = new Error("Estado inválido");
+            error.statusCode = 400;
+            return next(error);
         }
 
-        // Buscar el turno por ID
         const appointment = await Appointment.findById(appointmentId);
 
         if (!appointment) {
-            return res.status(404).json({ message: "Turno no encontrado" });
+            const error = new Error('Turno no encontrado');
+            error.statusCode = 404;
+            return next(error);
         }
 
-        // Validar que el estado actual no sea "Cancelado" o "Completado"
         if (["Cancelado", "Completado"].includes(appointment.estado)) {
-            return res.status(400).json({ message: `No se puede cambiar el estado de un turno ${appointment.estado.toLowerCase()}` });
+            const error = new Error(`No se puede cambiar el estado de un turno ${appointment.estado.toLowerCase()}`);
+            error.statusCode = 400;
+            return next(error);
         }
 
-        // Actualizar el estado del turno
         appointment.estado = estado;
         await appointment.save();
 
@@ -126,12 +131,15 @@ export const addStudyResults = async (req, res, next) => {
         const appointment = await Appointment.findById(appointmentId);
 
         if (!appointment) {
-            return res.status(404).json({ message: "Turno no encontrado" });
+            const error = new Error('Turno no encontrado');
+            error.statusCode = 404;
+            return next(error);
         }
 
-        // Validate the number of studies
         if (appointment.resultados_estudios.length + resultados_estudios.length > 10) {
-            return res.status(400).json({ message: "No puedes registrar más de 10 estudios por turno" });
+            const error = new Error("No puedes registrar más de 10 estudios por turno");
+            error.statusCode = 400;
+            return next(error);
         }
 
         appointment.resultados_estudios.push(...resultados_estudios);
@@ -151,7 +159,9 @@ export const deleteAppointment = async (req, res, next) => {
         const appointment = await Appointment.findById(appointmentId);
 
         if (!appointment) {
-            return res.status(404).json({ message: "Turno no encontrado" });
+            const error = new Error('Turno no encontrado');
+            error.statusCode = 404;
+            return next(error);
         }
 
         await Appointment.findByIdAndDelete(appointmentId);

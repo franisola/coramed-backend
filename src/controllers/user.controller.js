@@ -9,7 +9,9 @@ export const getUserProfile = async (req, res, next) => {
         const user = await User.findById(userId).select("-password");
 
         if (!user) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
+            const error = new Error("Usuario no encontrado");
+            error.statusCode = 404;
+            return next(error);
         }
 
         res.status(200).json(user);
@@ -27,7 +29,9 @@ export const updateUserProfile = async (req, res, next) => {
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
+            const error = new Error("Usuario no encontrado");
+            error.statusCode = 404;
+            return next(error);
         }
 
         user.nombre = nombre || user.nombre;
@@ -80,7 +84,9 @@ export const deleteUser = async (req, res, next) => {
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
+            const error = new Error("Usuario no encontrado");
+            error.statusCode = 404;
+            return next(error);
         }
 
         await User.findByIdAndDelete(userId);

@@ -1,150 +1,121 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model.js'; // User model
+import User from '../models/user.model.js';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 
 dotenv.config();
 
-const TOKEN_SECRET = process.env.TOKEN_SECRET; // Ensure this is defined in your .env file
+const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
 export const getSessionUser = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user.id).select('-password');
 
 		if (!user) {
-			return res.status(404).json({ message: 'Usuario no encontrado', logued: false });
+			const error = new Error('Usuario no encontrado');
+			error.statusCode = 404;
+			return next(error);
 		}
 
-		res.status(200).json( { user: user, logued: true });
+		res.status(200).json({ user, logued: true });
 	} catch (error) {
 		next(error);
 	}
 };
 
-
-
-// Create a new user
 export const createUser = async (req, res, next) => {
 	try {
 		const { dni, email, password, genero, nombreCompleto } = req.body;
-
-		// Normalize the email to lowercase
 		const normalizedEmail = email.toLowerCase();
 
-		// Create the user
 		const newUser = new User({
 			dni,
 			email: normalizedEmail,
-			password, // Will be hashed automatically by the middleware in the model
+			password,
 			genero,
 			nombreCompleto,
 		});
 
 		await newUser.save();
 
-		// Generate a token
 		const token = jwt.sign({ id: newUser._id, email: newUser.email }, TOKEN_SECRET, {
 			expiresIn: '1d',
 		});
 
-		// Set the cookie with the token
-		res.cookie('token', token, {
-			httpOnly: true, // The cookie is not accessible from JavaScript
-			secure: process.env.NODE_ENV === 'production', // Only in HTTPS in production
-			sameSite: 'strict', // Prevent CSRF attacks
-			maxAge: 24 * 60 * 60 * 1000, // 1 day
-		});
-
-        const { createdAt, updateAt, ...safeUser } = newUser.toObject(); 
-        delete safeUser.password; 
-
-
-		// return res.status(201).json({ user: safeUser, message: 'Usuario creado exitosamente.' });
-		return res.status(201).json({ message: 'Usuario creado exitosamente.' });
-
-	} catch (error) {
-		// Handle model errors
-		if (error.name === 'ValidationError') {
-			return res.status(400).json({ message: error.message });
-		}
-		next(error);
-	}
-};
-
-// Log in
-export const loginUser = async (req, res, next) => {
-	try {
-		const { email, password } = req.body;
-
-		// Normalizar el email a minúsculas
-		const normalizedEmail = email.toLowerCase();
-
-		// Buscar usuario por email
-		const user = await User.findOne({ email: normalizedEmail });
-		if (!user) {
-			return res.status(404).json({ message: 'Usuario no encontrado.' });
-		}
-
-		// Verificar contraseña
-		const isPasswordValid = await user.comparePassword(password);
-		if (!isPasswordValid) {
-			return res.status(401).json({ message: 'Credenciales incorrectas.' });
-		}
-
-		// Generar token JWT
-		const token = jwt.sign({ id: user._id, email: user.email }, TOKEN_SECRET, {
-			expiresIn: '1d',
-		});
-
-		// Setear cookie con el token
 		res.cookie('token', token, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'strict',
-			maxAge: 24 * 60 * 60 * 1000, // 1 día
+			maxAge: 24 * 60 * 60 * 1000,
 		});
 
+		return res.status(201).json({ message: 'Usuario creado exitosamente.' });
+	} catch (error) {
+		if (error.name === 'ValidationError') {
+			error.statusCode = 400;
+		}
+		next(error);
+	}
+};
 
-        const { createdAt, updateAt, ...safeUser } = user.toObject(); 
-        delete safeUser.password; 
+export const loginUser = async (req, res, next) => {
+	try {
+		const { email, password } = req.body;
+		const normalizedEmail = email.toLowerCase();
 
+		const user = await User.findOne({ email: normalizedEmail });
+		if (!user) {
+			const error = new Error('Usuario no encontrado.');
+			error.statusCode = 404;
+			return next(error);
+		}
 
-		// return res.status(200).json({ user: safeUser, message: 'Login exitoso.' });
+		const isPasswordValid = await user.comparePassword(password);
+		if (!isPasswordValid) {
+			const error = new Error('Credenciales incorrectas.');
+			error.statusCode = 401;
+			return next(error);
+		}
+
+		const token = jwt.sign({ id: user._id, email: user.email }, TOKEN_SECRET, {
+			expiresIn: '1d',
+		});
+
+		res.cookie('token', token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 24 * 60 * 60 * 1000,
+		});
+
 		return res.status(200).json({ message: 'Login exitoso.' });
-
 	} catch (error) {
 		next(error);
 	}
 };
 
-// Recover password
 export const recoverPassword = async (req, res, next) => {
 	try {
 		const { email } = req.body;
-
-		// Normalize the email to lowercase
 		const normalizedEmail = email.toLowerCase();
 
-		// Check if the user exists
 		const user = await User.findOne({ email: normalizedEmail });
 		if (!user) {
-			return res.status(404).json({ message: 'Usuario no encontrado.' });
+			const error = new Error('Usuario no encontrado.');
+			error.statusCode = 404;
+			return next(error);
 		}
 
-		// Generate a recovery token
 		const recoveryToken = jwt.sign({ id: user._id }, TOKEN_SECRET, { expiresIn: '1h' });
 
-		// Configure the email transport (using Gmail)
 		const transporter = nodemailer.createTransport({
-			service: 'gmail', // Use Gmail as the provider
+			service: 'gmail',
 			auth: {
-				user: process.env.EMAIL_USER, // Your Gmail email
-				pass: process.env.EMAIL_PASS, // Password or app token
+				user: process.env.EMAIL_USER,
+				pass: process.env.EMAIL_PASS,
 			},
 		});
 
-		// Configure the email content
 		const mailOptions = {
 			from: process.env.EMAIL_USER,
 			to: normalizedEmail,
@@ -152,44 +123,44 @@ export const recoverPassword = async (req, res, next) => {
 			html: `
                 <p>Hola ${user.nombre || 'Usuario'},</p>
                 <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
-                <p>${recoveryToken}</p>
-				<a href="${process.env.CLIENT_URL}/reset-password/${recoveryToken}">Restablecer contraseña</a>
+				<a href="coramed://reset-password/reset-password/${recoveryToken}">Restablecer contraseña</a>
                 <p>Este enlace es válido por 1 hora.</p>
             `,
 		};
 
-		// Send the email
 		await transporter.sendMail(mailOptions);
 
 		return res
 			.status(200)
 			.json({ message: 'Se ha enviado un correo para recuperar la contraseña.' });
 	} catch (error) {
+		error.statusCode = 500;
+		error.message = 'Error al enviar el correo de recuperación.';
 		next(error);
 	}
 };
 
-// Reset password
 export const resetPassword = async (req, res, next) => {
 	try {
 		const { token, newPassword } = req.body;
 
-		// Verify the token
 		let decoded;
 		try {
 			decoded = jwt.verify(token, TOKEN_SECRET);
 		} catch (error) {
-			return res.status(400).json({ message: 'El token es inválido o ha expirado.' });
+			const err = new Error('El token es inválido o ha expirado.');
+			err.statusCode = 400;
+			return next(err);
 		}
 
-		// Find the user by ID
 		const user = await User.findById(decoded.id);
 		if (!user) {
-			return res.status(404).json({ message: 'Usuario no encontrado.' });
+			const error = new Error('Usuario no encontrado.');
+			error.statusCode = 404;
+			return next(error);
 		}
 
-		// Update the password
-		user.password = newPassword; // Will be hashed automatically by the middleware in the model
+		user.password = newPassword;
 		await user.save();
 
 		return res.status(200).json({ message: 'Contraseña restablecida exitosamente.' });
@@ -198,24 +169,22 @@ export const resetPassword = async (req, res, next) => {
 	}
 };
 
-// Log out
 export const logoutUser = (req, res) => {
 	res.clearCookie('token');
 	return res.status(200).json({ message: 'Sesión cerrada exitosamente.' });
 };
 
-// Delete user account
 export const deleteAccount = async (req, res, next) => {
 	try {
-		const userId = req.user.id; // The authenticated user's ID is obtained from the token
+		const userId = req.user.id;
 
-		// Check if the user exists
 		const user = await User.findById(userId);
 		if (!user) {
-			return res.status(404).json({ message: 'Usuario no encontrado' });
+			const error = new Error('Usuario no encontrado.');
+			error.statusCode = 404;
+			return next(error);
 		}
 
-		// Delete the user
 		await User.findByIdAndDelete(userId);
 
 		res.status(200).json({ message: 'Cuenta eliminada exitosamente.' });
