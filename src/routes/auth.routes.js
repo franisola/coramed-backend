@@ -74,6 +74,6 @@ router.delete(
 	authController.deleteAccount
 );
 
-router.get('/me', authRequired, getSessionUser);
+router.get('/me', authRequired, authController.getSessionUser);
 
 export default router;
