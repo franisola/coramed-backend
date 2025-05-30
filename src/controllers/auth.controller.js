@@ -131,7 +131,7 @@ export const recoverPassword = async (req, res, next) => {
 			html: `
                 <p>Hola ${user.nombre || 'Usuario'},</p>
                 <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
-				<a href="coramed://reset-password/reset-password/${recoveryToken}">Restablecer contraseña</a>
+				<a href="coramed://reset-password/${recoveryToken}">Restablecer contraseña</a>
                 <p>Este enlace es válido por 1 hora.</p>
             `,
 		};
