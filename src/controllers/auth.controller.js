@@ -103,49 +103,63 @@ export const loginUser = async (req, res, next) => {
 };
 
 export const recoverPassword = async (req, res, next) => {
-	try {
-		const { email } = req.body;
-		const normalizedEmail = email.toLowerCase();
+  try {
+    const { email } = req.body;
+    const normalizedEmail = email.toLowerCase();
 
-		const user = await User.findOne({ email: normalizedEmail });
-		if (!user) {
-			const error = new Error('Usuario no encontrado.');
-			error.statusCode = 404;
-			return next(error);
-		}
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      const error = new Error("Usuario no encontrado.");
+      error.statusCode = 404;
+      return next(error);
+    }
 
-		const recoveryToken = jwt.sign({ id: user._id }, TOKEN_SECRET, { expiresIn: '1h' });
+    const recoveryToken = jwt.sign({ id: user._id }, TOKEN_SECRET, {
+      expiresIn: "1h",
+    });
 
-		const transporter = nodemailer.createTransport({
-			service: 'gmail',
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-		});
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-		const mailOptions = {
-			from: process.env.EMAIL_USER,
-			to: normalizedEmail,
-			subject: 'Recuperación de contraseña',
-			html: `
-                <p>Hola ${user.nombre || 'Usuario'},</p>
-                <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
-				<a href="coramed://reset-password/${recoveryToken}">Restablecer contraseña</a>
-                <p>Este enlace es válido por 1 hora.</p>
-            `,
-		};
+    // ✅ Enlace deep link para mobile
+    const mobileLink = coramed://reset-password/${recoveryToken};
 
-		await transporter.sendMail(mailOptions);
+    // ✅ Enlace web (puede redirigir a la app vía linking web si la app está instalada)
+    const webLink = https://coramed.com/reset-password/${recoveryToken};
 
-		return res
-			.status(200)
-			.json({ message: 'Se ha enviado un correo para recuperar la contraseña.' });
-	} catch (error) {
-		error.statusCode = 500;
-		error.message = 'Error al enviar el correo de recuperación.';
-		next(error);
-	}
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: normalizedEmail,
+      subject: "Recuperación de contraseña",
+      html: `
+  <p>Hola ${user.nombre || 'Usuario'},</p>
+  <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en uno de los siguientes enlaces para continuar:</p>
+  <p><strong>Desde tu celular:</strong><br>
+  <a href="${mobileLink}">${mobileLink}</a></p>
+  <p><strong>Desde un navegador:</strong><br>
+  <a href="${webLink}">${webLink}</a></p>
+  <p>Este enlace es válido por 1 hora.</p>
+  <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>`
+,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res
+      .status(200)
+      .json({
+        message: "Se ha enviado un correo para recuperar la contraseña.",
+      });
+  } catch (error) {
+    error.statusCode = 500;
+    error.message = "Error al enviar el correo de recuperación.";
+    next(error);
+  }
 };
 
 export const resetPassword = async (req, res, next) => {
