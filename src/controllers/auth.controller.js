@@ -127,24 +127,25 @@ export const recoverPassword = async (req, res, next) => {
 		});
 
 		// ✅ Enlace deep link para mobile
-		const mobileLink = 'coramed://reset-password/${recoveryToken}';
+		const mobileLink = `coramed://reset-password/${recoveryToken}`;
 
 		// ✅ Enlace web (puede redirigir a la app vía linking web si la app está instalada)
-		const webLink = 'https://coramed.com/reset-password/${recoveryToken}';
+		const webLink = `https://coramed.com/reset-password/${recoveryToken}`;
 
 		const mailOptions = {
 			from: process.env.EMAIL_USER,
 			to: normalizedEmail,
 			subject: 'Recuperación de contraseña',
 			html: `
-  <p>Hola ${user.nombre || 'Usuario'},</p>
-  <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en uno de los siguientes enlaces para continuar:</p>
-  <p><strong>Desde tu celular:</strong><br>
-  <a href="${mobileLink}">${mobileLink}</a></p>
-  <p><strong>Desde un navegador:</strong><br>
-  <a href="${webLink}">${webLink}</a></p>
-  <p>Este enlace es válido por 1 hora.</p>
-  <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>`,
+        <p>Hola ${user.nombre || 'Usuario'},</p>
+        <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en uno de los siguientes enlaces para continuar:</p>
+        <p><strong>Desde tu celular:</strong></p>
+        <a href="${mobileLink}">${mobileLink}</a>
+        <p><strong>Desde un navegador:</strong></p>
+        <a href="${webLink}">${webLink}</a>
+        <p>Este enlace es válido por 1 hora.</p>
+        <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+      `,
 		};
 
 		await transporter.sendMail(mailOptions);
@@ -158,7 +159,6 @@ export const recoverPassword = async (req, res, next) => {
 		next(error);
 	}
 };
-
 export const resetPassword = async (req, res, next) => {
 	try {
 		const { token, newPassword } = req.body;
