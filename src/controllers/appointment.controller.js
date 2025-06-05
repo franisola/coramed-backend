@@ -49,7 +49,7 @@ export const createAppointment = async (req, res, next) => {
 		}
 
 		const newAppointment = new Appointment({
-			paciente,
+			paciente: req.user.id, 
 			profesional,
 			especialidad: professional.especialidad,
 			fecha,
