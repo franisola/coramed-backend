@@ -24,6 +24,13 @@ router.post(
 );
 
 /**
+ * @route GET /user/profile/appointments
+ * @desc Get the user's appointments (history and upcoming)
+ * @access Private
+ */
+router.get('/', authRequired, appointmentController.getUserAppointments);
+
+/**
  * @route GET /next
  * @desc Get the next appointment for the authenticated user
  * @access Private

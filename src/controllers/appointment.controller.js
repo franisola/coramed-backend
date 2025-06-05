@@ -198,3 +198,32 @@ export const deleteAppointment = async (req, res, next) => {
 		next(error);
 	}
 };
+
+
+
+// Get the user's appointments, divided into upcoming and past
+export const getUserAppointments = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const currentDate = new Date();
+
+        const appointments = await Appointment.find({ paciente: userId })
+            .populate("profesional", "nombre apellido especialidad")
+            .sort({ fecha: 1, hora: 1 });
+
+        const pastAppointments = appointments.filter(
+            (appointment) => appointment.fecha < currentDate || appointment.estado === "Completado"
+        );
+
+        const upcomingAppointments = appointments.filter(
+            (appointment) => appointment.fecha >= currentDate && appointment.estado !== "Completado"
+        );
+
+        res.status(200).json({
+            anteriores: pastAppointments,
+            proximos: upcomingAppointments,
+        });
+    } catch (error) {
+        next(error);
+    }
+};

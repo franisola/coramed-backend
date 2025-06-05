@@ -28,12 +28,6 @@ router.put(
     userController.updateUserProfile
 );
 
-/**
- * @route GET /user/profile/appointments
- * @desc Get the user's appointments (history and upcoming)
- * @access Private
- */
-router.get("/profile/appointments", authRequired, userController.getUserAppointments);
 
 /**
  * @route DELETE /user/profile
