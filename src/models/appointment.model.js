@@ -9,7 +9,7 @@ const AppointmentSchema = new mongoose.Schema(
         },
         profesional: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Profesional", // Relation with the Professional model
+            ref: "Professional", // Relation with the Professional model
             required: [true, "El profesional es obligatorio"],
         },
         especialidad: {
