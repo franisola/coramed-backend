@@ -3,7 +3,7 @@ import { z } from "zod";
 
 // Esquema para crear un turno
 export const createAppointmentSchema = z.object({
-    paciente: z.string().nonempty("El ID del paciente es obligatorio"),
+    // paciente: z.string().nonempty("El ID del paciente es obligatorio"),
     profesional: z.string().nonempty("El ID del profesional es obligatorio"),
     especialidad: z.string()
         .nonempty("La especialidad es obligatoria")
