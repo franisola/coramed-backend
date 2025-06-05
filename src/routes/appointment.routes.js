@@ -1,13 +1,13 @@
-import { Router } from "express";
-import * as appointmentController from "../controllers/appointment.controller.js";
-import { authRequired } from "../jwt/auth.service.js";
-import { validateSchema } from "../middlewares/validator.middleware.js";
+import { Router } from 'express';
+import * as appointmentController from '../controllers/appointment.controller.js';
+import { authRequired } from '../jwt/auth.service.js';
+import { validateSchema } from '../middlewares/validator.middleware.js';
 import {
-    createAppointmentSchema,
-    updateAppointmentStatusSchema,
-    addStudyResultsSchema,
-    deleteAppointmentSchema,
-} from "../schemas/appointment.schema.js";
+	createAppointmentSchema,
+	updateAppointmentStatusSchema,
+	addStudyResultsSchema,
+	deleteAppointmentSchema,
+} from '../schemas/appointment.schema.js';
 
 const router = Router();
 
@@ -17,26 +17,25 @@ const router = Router();
  * @access Private
  */
 router.post(
-    "/",
-    authRequired,
-    validateSchema(createAppointmentSchema), // Valida req.body
-    appointmentController.createAppointment
+	'/',
+	authRequired,
+	validateSchema(createAppointmentSchema), // Valida req.body
+	appointmentController.createAppointment
 );
-
-/**
- * @route GET /:appointmentId
- * @desc Get a specific appointment
- * @access Private
- */
-router.get("/:appointmentId", authRequired, appointmentController.getAppointmentById);
-
 
 /**
  * @route GET /next
  * @desc Get the next appointment for the authenticated user
  * @access Private
  */
-router.get("/next", authRequired, appointmentController.getNextAppointment);
+router.get('/next', authRequired, appointmentController.getNextAppointment);
+
+/**
+ * @route GET /:appointmentId
+ * @desc Get a specific appointment
+ * @access Private
+ */
+router.get('/:appointmentId', authRequired, appointmentController.getAppointmentById);
 
 /**
  * @route PUT /:appointmentId/status
@@ -44,10 +43,10 @@ router.get("/next", authRequired, appointmentController.getNextAppointment);
  * @access Private
  */
 router.put(
-    "/:appointmentId/status",
-    authRequired,
-    validateSchema(updateAppointmentStatusSchema), // Valida req.body
-    appointmentController.updateAppointmentStatus
+	'/:appointmentId/status',
+	authRequired,
+	validateSchema(updateAppointmentStatusSchema), // Valida req.body
+	appointmentController.updateAppointmentStatus
 );
 
 /**
@@ -56,10 +55,10 @@ router.put(
  * @access Private
  */
 router.put(
-    "/:appointmentId/results",
-    authRequired,
-    validateSchema(addStudyResultsSchema), // Valida req.body
-    appointmentController.addStudyResults
+	'/:appointmentId/results',
+	authRequired,
+	validateSchema(addStudyResultsSchema), // Valida req.body
+	appointmentController.addStudyResults
 );
 
 /**
@@ -68,10 +67,10 @@ router.put(
  * @access Private
  */
 router.delete(
-    "/:appointmentId",
-    authRequired,
-    validateSchema(deleteAppointmentSchema), // Valida req.body (aunque no requiere datos)
-    appointmentController.deleteAppointment
+	'/:appointmentId',
+	authRequired,
+	validateSchema(deleteAppointmentSchema), // Valida req.body (aunque no requiere datos)
+	appointmentController.deleteAppointment
 );
 
 export default router;
