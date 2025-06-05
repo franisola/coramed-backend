@@ -49,7 +49,7 @@ export const createAppointment = async (req, res, next) => {
 		}
 
 		const newAppointment = new Appointment({
-			paciente: req.user.id, 
+			paciente: req.user.id,
 			profesional,
 			especialidad: professional.especialidad,
 			fecha,
@@ -96,7 +96,9 @@ export const getNextAppointment = async (req, res, next) => {
 			paciente: userId,
 			estado: 'Agendado',
 			fecha: { $gte: currentDate },
-		}).sort({ fecha: 1, hora: 1 });
+		})
+			.sort({ fecha: 1, hora: 1 })
+			.populate('profesional', 'nombre apellido especialidad');
 
 		if (!appointment) {
 			const error = new Error('No se encontro ningun turno proximo');
