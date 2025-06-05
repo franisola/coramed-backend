@@ -30,6 +30,14 @@ router.post(
  */
 router.get("/:appointmentId", authRequired, appointmentController.getAppointmentById);
 
+
+/**
+ * @route GET /next
+ * @desc Get the next appointment for the authenticated user
+ * @access Private
+ */
+router.get("/next", authRequired, appointmentController.getNextAppointment);
+
 /**
  * @route PUT /:appointmentId/status
  * @desc Update the status of an appointment
