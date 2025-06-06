@@ -199,31 +199,41 @@ export const deleteAppointment = async (req, res, next) => {
 	}
 };
 
-
-
 // Get the user's appointments, divided into upcoming and past
 export const getUserAppointments = async (req, res, next) => {
-    try {
-        const userId = req.user.id;
-        const currentDate = new Date();
+	try {
+		const userId = req.user.id;
+		const currentDate = new Date();
 
-        const appointments = await Appointment.find({ paciente: userId })
-            .populate("profesional", "nombre apellido especialidad")
-            .sort({ fecha: 1, hora: 1 });
+		const appointments = await Appointment.find({ paciente: userId })
+			.populate('profesional', 'nombre apellido especialidad')
+			.sort({ fecha: 1, hora: 1 });
 
-        const pastAppointments = appointments.filter(
-            (appointment) => appointment.fecha < currentDate || appointment.estado === "Completado"
-        );
+		const now = new Date();
 
-        const upcomingAppointments = appointments.filter(
-            (appointment) => appointment.fecha >= currentDate && appointment.estado !== "Completado"
-        );
+		const pastAppointments = appointments.filter((appointment) => {
+			const appointmentDateTime = new Date(
+				`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`
+			);
+			return (
+				appointment.estado === 'Completado' ||
+				appointment.estado === 'Cancelado' ||
+				appointmentDateTime < now
+			);
+		});
 
-        res.status(200).json({
-            anteriores: pastAppointments,
-            proximos: upcomingAppointments,
-        });
-    } catch (error) {
-        next(error);
-    }
+		const upcomingAppointments = appointments.filter((appointment) => {
+			const appointmentDateTime = new Date(
+				`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`
+			);
+			return appointment.estado === 'Agendado' && appointmentDateTime >= now;
+		});
+
+		res.status(200).json({
+			anteriores: pastAppointments,
+			proximos: upcomingAppointments,
+		});
+	} catch (error) {
+		next(error);
+	}
 };
