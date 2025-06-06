@@ -9,6 +9,13 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
 export const getSessionUser = async (req, res, next) => {
 	try {
+
+		if (!req.user || !req.user.id) {
+			const error = new Error('Usuario no autenticado');
+			error.statusCode = 401;
+			return next(error);
+		}
+
 		const user = await User.findById(req.user.id).select('-password');
 
 		if (!user) {
