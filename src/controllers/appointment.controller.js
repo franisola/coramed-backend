@@ -201,56 +201,39 @@ export const deleteAppointment = async (req, res, next) => {
 
 // Get the user's appointments, divided into upcoming and past
 export const getUserAppointments = async (req, res, next) => {
-    try {
-        const userId = req.user.id;
+	try {
+		const userId = req.user.id;
 
-        const appointments = await Appointment.find({ paciente: userId })
-            .populate('profesional', 'nombre apellido especialidad')
-            .sort({ fecha: 1, hora: 1 });
 
-        const now = new Date();
+		const appointments = await Appointment.find({ paciente: userId })
+			.populate('profesional', 'nombre apellido especialidad')
+			.sort({ fecha: 1, hora: 1 });
 
-        const formatDate = (date) => {
-            const d = new Date(date);
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            return `${day}/${month}/${year}`;
-        };
+		const now = new Date();
 
-        const pastAppointments = appointments
-            .filter((appointment) => {
-                const appointmentDateTime = new Date(`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`);
-                return (
-                    appointment.estado === 'Completado' ||
-                    appointment.estado === 'Cancelado' ||
-                    appointmentDateTime < now
-                );
-            })
-            .map((appointment) => ({
-                ...appointment.toObject(),
-                fecha: formatDate(appointment.fecha),
-            }));
+		const pastAppointments = appointments.filter((appointment) => {
+			const appointmentDateTime = new Date(
+				`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`
+			);
+			return (
+				appointment.estado === 'Completado' ||
+				appointment.estado === 'Cancelado' ||
+				appointmentDateTime < now
+			);
+		});
 
-        const upcomingAppointments = appointments
-            .filter((appointment) => {
-                const appointmentDateTime = new Date(`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`);
-                return (
-                    appointment.estado === 'Agendado' &&
-                    appointmentDateTime >= now
-                );
-            })
-            .map((appointment) => ({
-                ...appointment.toObject(),
-                fecha: formatDate(appointment.fecha),
-            }));
+		const upcomingAppointments = appointments.filter((appointment) => {
+			const appointmentDateTime = new Date(
+				`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`
+			);
+			return appointment.estado === 'Agendado' && appointmentDateTime >= now;
+		});
 
-        res.status(200).json({
-            anteriores: pastAppointments,
-            proximos: upcomingAppointments,
-        });
-    } catch (error) {
-        next(error);
-    }
+		res.status(200).json({
+			anteriores: pastAppointments,
+			proximos: upcomingAppointments,
+		});
+	} catch (error) {
+		next(error);
+	}
 };
-
