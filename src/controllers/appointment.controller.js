@@ -73,7 +73,7 @@ export const getAppointmentById = async (req, res, next) => {
 
 		const appointment = await Appointment.findById(appointmentId)
 			.populate('profesional', 'nombre apellido especialidad')
-			.populate('paciente', 'nombre apellido email');
+			.populate('paciente', 'nombreCompleto email');
 
 		if (!appointment) {
 			const error = new Error('Turno no encontrado');
@@ -143,7 +143,11 @@ export const updateAppointmentStatus = async (req, res, next) => {
 		appointment.estado = estado;
 		await appointment.save();
 
-		res.status(200).json({ message: 'Estado del turno actualizado', appointment });
+		const updated = await Appointment.findById(appointmentId)
+			.populate('profesional', 'nombre apellido especialidad')
+			.populate('paciente', 'nombre apellido email');
+
+		res.status(200).json(updated);
 	} catch (error) {
 		next(error);
 	}
@@ -203,7 +207,6 @@ export const deleteAppointment = async (req, res, next) => {
 export const getUserAppointments = async (req, res, next) => {
 	try {
 		const userId = req.user.id;
-
 
 		const appointments = await Appointment.find({ paciente: userId })
 			.populate('profesional', 'nombre apellido especialidad')
