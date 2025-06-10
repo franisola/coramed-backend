@@ -157,7 +157,7 @@ export const updateAppointmentStatus = async (req, res, next) => {
 export const addStudyResults = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
-		const { nombre, pdf } = req.body;
+		const { notas_medicas, resultados_estudios } = req.body; // ← ya validado
 
 		const appointment = await Appointment.findById(appointmentId);
 
@@ -167,24 +167,30 @@ export const addStudyResults = async (req, res, next) => {
 			return next(error);
 		}
 
-		if (appointment.resultados_estudios.length + resultados_estudios.length > 10) {
-			const error = new Error('No puedes registrar más de 10 estudios por turno');
+		const cantidadActual = appointment.resultados_estudios.length;
+		const cantidadNueva = resultados_estudios.length;
+		const cantidadTotal = cantidadActual + cantidadNueva;
+
+		if (cantidadTotal > 10) {
+			const error = new Error(
+				`No puedes registrar más de 10 estudios por turno (ya hay ${cantidadActual})`
+			);
 			error.statusCode = 400;
 			return next(error);
 		}
+		if (cantidadNueva > 0) appointment.resultados_estudios.push(...resultados_estudios);
 
-		const resultado = {
-			nombre,
-			pdf,
-			fecha_carga: new Date(),
-		};
+		// Si hay nuevas notas médicas, se actualizan
+		if (notas_medicas) {
+			appointment.notas_medicas = notas_medicas;
+		}
 
-		appointment.resultados_estudios.push(resultado);
 		await appointment.save();
 
+		// Retornar el turno actualizado y poblado
 		const updated = await Appointment.findById(appointmentId)
 			.populate('profesional', 'nombre apellido especialidad')
-			.populate('paciente', 'nombreCompleto email');
+			.populate('paciente', 'nombre apellido email');
 
 		res.status(200).json(updated);
 	} catch (error) {
