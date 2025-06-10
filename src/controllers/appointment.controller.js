@@ -157,7 +157,7 @@ export const updateAppointmentStatus = async (req, res, next) => {
 export const addStudyResults = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
-		const { resultados_estudios } = req.body;
+		const { nombre, pdf } = req.body;
 
 		const appointment = await Appointment.findById(appointmentId);
 
@@ -173,10 +173,20 @@ export const addStudyResults = async (req, res, next) => {
 			return next(error);
 		}
 
-		appointment.resultados_estudios.push(...resultados_estudios);
+		const resultado = {
+			nombre,
+			pdf,
+			fecha_carga: new Date(),
+		};
+
+		appointment.resultados_estudios.push(resultado);
 		await appointment.save();
 
-		res.status(200).json({ message: 'Resultados de estudios agregados', appointment });
+		const updated = await Appointment.findById(appointmentId)
+			.populate('profesional', 'nombre apellido especialidad')
+			.populate('paciente', 'nombreCompleto email');
+
+		res.status(200).json(updated);
 	} catch (error) {
 		next(error);
 	}
