@@ -4,16 +4,14 @@ import User from '../models/user.model.js';
 // Get the user's health insurance
 export const getHealthInsurance = async (req, res, next) => {
 	try {
-		const userId = req.user.id;
-
 		const user = await User.findById(userId).populate('obra_social');
-		if (!user || !user.obra_social) {
-			const error = new Error('Obra social no encontrada');
+		if (!user) {
+			const error = new Error('Usuario no encontrado');
 			error.statusCode = 404;
 			return next(error);
 		}
 
-		res.status(200).json(user.obra_social);
+		res.status(200).json(user.obra_social || null);
 	} catch (error) {
 		next(error);
 	}
