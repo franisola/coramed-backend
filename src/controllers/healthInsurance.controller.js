@@ -4,6 +4,8 @@ import User from '../models/user.model.js';
 // Get the user's health insurance
 export const getHealthInsurance = async (req, res, next) => {
 	try {
+		const userId = req.user.id;
+
 		const user = await User.findById(userId).populate('obra_social');
 		if (!user) {
 			const error = new Error('Usuario no encontrado');
@@ -16,6 +18,8 @@ export const getHealthInsurance = async (req, res, next) => {
 		next(error);
 	}
 };
+
+
 
 // Create or update the user's health insurance
 export const upsertHealthInsurance = async (req, res, next) => {
