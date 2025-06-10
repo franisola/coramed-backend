@@ -145,7 +145,7 @@ export const updateAppointmentStatus = async (req, res, next) => {
 
 		const updated = await Appointment.findById(appointmentId)
 			.populate('profesional', 'nombre apellido especialidad')
-			.populate('paciente', 'nombre apellido email');
+			.populate('paciente', 'nombreCompleto email');
 
 		res.status(200).json(updated);
 	} catch (error) {
