@@ -11,8 +11,11 @@ export const createAppointmentSchema = z.object({
 		.trim(),
 	fecha: z.string().refine((fecha) => {
 		const inputDate = new Date(fecha);
-		return inputDate > new Date();
-	}, 'La fecha del turno debe ser futura o actuallll'),
+		const tomorrow = new Date();
+		tomorrow.setHours(0, 0, 0, 0);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+		return inputDate >= tomorrow;
+	}, 'La fecha del turno debe ser a partir de mañana a las 00:00 horas'),
 	hora: z
 		.string()
 		.nonempty('La hora es obligatoria')
