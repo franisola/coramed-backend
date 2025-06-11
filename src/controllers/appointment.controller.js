@@ -101,9 +101,7 @@ export const getNextAppointment = async (req, res, next) => {
 			.populate('profesional', 'nombre apellido especialidad');
 
 		if (!appointment) {
-			const error = new Error('No se encontro ningun turno proximo');
-			error.statusCode = 404;
-			return next(error);
+			return res.status(200).json({ appointment: null });
 		}
 
 		res.status(200).json({ appointment });
