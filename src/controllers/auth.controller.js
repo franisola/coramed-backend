@@ -7,20 +7,24 @@ dotenv.config();
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
-export const getSessionUser = async (req, res, next) => {
-	try {
+export const getSessionUser = async (req, res) => {
+	const token = req.headers.authorization?.split(' ')[1];
 
-		const user = await User.findById(req.user.id).select('-password');
+	if (!token) {
+		return res.status(200).json({ isAuthenticated: false });
+	}
+
+	try {
+		const decoded = jwt.verify(token, TOKEN_SECRET);
+		const user = await User.findById(decoded.id).select('-password');
 
 		if (!user) {
-			const error = new Error('Usuario no encontrado');
-			error.statusCode = 404;
-			return next(error);
+			return res.status(200).json({ isAuthenticated: false });
 		}
 
-		res.status(200).json({ user, logued: true });
-	} catch (error) {
-		next(error);
+		return res.status(200).json({ isAuthenticated: true, user });
+	} catch (err) {
+		return res.status(200).json({ isAuthenticated: false });
 	}
 };
 
@@ -58,7 +62,7 @@ export const createUser = async (req, res, next) => {
 			maxAge: 24 * 60 * 60 * 1000,
 		});
 
-		return res.status(201).json({ message: 'Usuario creado exitosamente.' });
+		return res.status(201).json({ message: 'Usuario creado exitosamente.', token });
 	} catch (error) {
 		if (error.name === 'ValidationError') {
 			error.statusCode = 400;
@@ -97,7 +101,7 @@ export const loginUser = async (req, res, next) => {
 			maxAge: 24 * 60 * 60 * 1000,
 		});
 
-		return res.status(200).json({ message: 'Login exitoso.' });
+		return res.status(200).json({ message: 'Login exitoso.', token });
 	} catch (error) {
 		next(error);
 	}
