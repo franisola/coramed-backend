@@ -254,9 +254,9 @@ export const resetPassword = async (req, res, next) => {
 		}
 
 		// const hashedPassword = await bcrypt.hash(password, 10);
-		// user.password = hashedPassword;
+		user.password = password; 
 
-		
+
 		user.recoveryCode = undefined;
 		user.recoveryCodeExpires = undefined;
 		user.recoveryCodeAttempts = 0;
