@@ -85,6 +85,7 @@ export const loginUser = async (req, res, next) => {
 		}
 
 		const isPasswordValid = await user.comparePassword(password);
+
 		if (!isPasswordValid) {
 			const error = new Error('Credenciales incorrectas.');
 			error.statusCode = 401;
@@ -139,13 +140,13 @@ export const recoverPassword = async (req, res, next) => {
 		const transporter = nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
-				user: "turnosmedicosapp@gmail.com",
-				pass: "cpbi pxiu uvpr dswv",
+				user: 'turnosmedicosapp@gmail.com',
+				pass: 'cpbi pxiu uvpr dswv',
 			},
 		});
 
 		const mailOptions = {
-			from: "turnosmedicosapp@gmail.com",
+			from: 'turnosmedicosapp@gmail.com',
 			to: normalizedEmail,
 			subject: 'Código para restablecer tu contraseña',
 			html: `
@@ -169,7 +170,7 @@ export const recoverPassword = async (req, res, next) => {
 
 		return res.status(200).json({
 			message: 'Si el correo está registrado, se enviará un código de recuperación.',
-			success: true
+			success: true,
 		});
 	} catch (error) {
 		error.statusCode = 500;
@@ -244,14 +245,18 @@ export const resetPassword = async (req, res, next) => {
 		}
 
 		// Comparar nueva contraseña con la actual (hasheada)
-		const isSamePassword = await bcrypt.compare(password, user.password);
+		const isSamePassword = await user.comparePassword(password);
+
 		if (isSamePassword) {
-			return res.status(400).json({ error: 'La nueva contraseña debe ser distinta a la anterior.' });
+			return res
+				.status(400)
+				.json({ error: 'La nueva contraseña debe ser distinta a la anterior.' });
 		}
 
-		const hashedPassword = await bcrypt.hash(password, 10);
+		// const hashedPassword = await bcrypt.hash(password, 10);
+		// user.password = hashedPassword;
 
-		user.password = hashedPassword;
+		
 		user.recoveryCode = undefined;
 		user.recoveryCodeExpires = undefined;
 		user.recoveryCodeAttempts = 0;
@@ -260,12 +265,13 @@ export const resetPassword = async (req, res, next) => {
 
 		await user.save();
 
-		return res.status(200).json({ message: 'Contraseña restablecida exitosamente.', success: true });
+		return res
+			.status(200)
+			.json({ message: 'Contraseña restablecida exitosamente.', success: true });
 	} catch (error) {
 		next(error);
 	}
 };
-
 
 export const logoutUser = (req, res) => {
 	res.clearCookie('token');
