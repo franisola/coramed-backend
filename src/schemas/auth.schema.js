@@ -66,6 +66,7 @@ export const verifyCodeSchema = z.object({
 		.trim(),
 	code: z
 		.string()
+		.nonempty('El código de verificación es obligatorio')
 		.length(6, 'El código debe tener 6 dígitos')
 		.regex(/^\d+$/, 'El código debe ser numérico'),
 });
