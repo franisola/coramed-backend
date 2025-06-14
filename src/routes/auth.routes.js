@@ -6,6 +6,7 @@ import {
 	registerUserSchema,
 	loginUserSchema,
 	recoverPasswordSchema,
+	verifyCodeSchema,
 	resetPasswordSchema,
 	deleteUserSchema,
 } from '../schemas/auth.schema.js';
@@ -50,6 +51,8 @@ router.post(
 	validateSchema(recoverPasswordSchema),
 	authController.recoverPassword
 );
+
+router.post('/verify-code', authNotRequired, validateSchema(verifyCodeSchema), authController.verifyCode);
 
 /**
  * @route POST /auth/reset-password

@@ -50,7 +50,6 @@ export const loginUserSchema = z.object({
 		.trim(),
 });
 
-// Esquema para recuperar contraseña
 export const recoverPasswordSchema = z.object({
 	email: z
 		.string()
@@ -59,9 +58,24 @@ export const recoverPasswordSchema = z.object({
 		.trim(),
 });
 
-// Esquema para restablecer contraseña
+export const verifyCodeSchema = z.object({
+	email: z
+		.string()
+		.nonempty('El correo electrónico es obligatorio')
+		.email('El correo electrónico debe ser válido')
+		.trim(),
+	code: z
+		.string()
+		.length(6, 'El código debe tener 6 dígitos')
+		.regex(/^\d+$/, 'El código debe ser numérico'),
+});
+
 export const resetPasswordSchema = z.object({
-	token: z.string().nonempty('El token es obligatorio'),
+	email: z
+		.string()
+		.nonempty('El correo electrónico es obligatorio')
+		.email('El correo electrónico debe ser válido')
+		.trim(),
 	newPassword: z
 		.string()
 		.nonempty('La nueva contraseña es obligatoria')

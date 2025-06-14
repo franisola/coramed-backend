@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -110,88 +111,161 @@ export const loginUser = async (req, res, next) => {
 export const recoverPassword = async (req, res, next) => {
 	try {
 		const { email } = req.body;
+		if (!email || typeof email !== 'string') {
+			return res.status(400).json({ error: 'Email inválido.' });
+		}
 		const normalizedEmail = email.toLowerCase();
 
 		const user = await User.findOne({ email: normalizedEmail });
 		if (!user) {
-			const error = new Error('Usuario no encontrado.');
-			error.statusCode = 404;
-			return next(error);
+			// Mensaje genérico por seguridad
+			return res.status(200).json({
+				message: 'Si el correo está registrado, se enviará un código de recuperación.',
+			});
 		}
 
-		const recoveryToken = jwt.sign({ id: user._id }, TOKEN_SECRET, {
-			expiresIn: '1h',
-		});
+		const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
+		const hashedCode = await bcrypt.hash(recoveryCode, 10);
+		const expiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+		user.recoveryCode = hashedCode;
+		user.recoveryCodeExpires = expiration;
+		user.recoveryCodeAttempts = 0;
+		user.recoveryCodeBlockedUntil = undefined;
+		user.codeVerified = false;
+
+		await user.save();
 
 		const transporter = nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
+				user: "turnosmedicosapp@gmail.com",
+				pass: "cpbi pxiu uvpr dswv",
 			},
 		});
 
-		// ✅ Enlace deep link para mobile
-		const mobileLink = `coramed://reset-password/${recoveryToken}`;
-
-		// ✅ Enlace web (puede redirigir a la app vía linking web si la app está instalada)
-		const webLink = `https://coramed.com/reset-password/${recoveryToken}`;
-
 		const mailOptions = {
-			from: process.env.EMAIL_USER,
+			from: "turnosmedicosapp@gmail.com",
 			to: normalizedEmail,
-			subject: 'Recuperación de contraseña',
+			subject: 'Código para restablecer tu contraseña',
 			html: `
-        <p>Hola ${user.nombre || 'Usuario'},</p>
-        <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en uno de los siguientes enlaces para continuar:</p>
-        <p><strong>Desde tu celular:</strong></p>
-        <a href="${mobileLink}">${mobileLink}</a>
-        <p><strong>Desde un navegador:</strong></p>
-        <a href="${webLink}">${webLink}</a>
-        <p>Este enlace es válido por 1 hora.</p>
-        <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
-      `,
+			<p>Hola ${user.nombre || 'Usuario'},</p>
+			<p>Tu código para restablecer la contraseña es:</p>
+			<h2>${recoveryCode}</h2>
+			<p>Este código es válido por 1 hora.</p>
+			<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+			`,
 		};
+
+		transporter.sendMail(mailOptions, (error, info) => {
+			if (error) {
+				console.error('Error al enviar el correo:', error);
+			} else {
+				console.log('Correo enviado:', info.response);
+			}
+		});
 
 		await transporter.sendMail(mailOptions);
 
 		return res.status(200).json({
-			message: 'Se ha enviado un correo para recuperar la contraseña.',
+			message: 'Si el correo está registrado, se enviará un código de recuperación.',
+			success: true
 		});
 	} catch (error) {
 		error.statusCode = 500;
-		error.message = 'Error al enviar el correo de recuperación.';
+		error.message = 'Error al enviar el código de recuperación.';
 		next(error);
 	}
 };
-export const resetPassword = async (req, res, next) => {
+
+export const verifyCode = async (req, res, next) => {
 	try {
-		const { token, newPassword } = req.body;
+		const { email, code } = req.body;
 
-		let decoded;
-		try {
-			decoded = jwt.verify(token, TOKEN_SECRET);
-		} catch (error) {
-			const err = new Error('El token es inválido o ha expirado.');
-			err.statusCode = 400;
-			return next(err);
+		if (!email || typeof email !== 'string' || !code || typeof code !== 'string') {
+			return res.status(400).json({ error: 'Datos inválidos.' });
 		}
 
-		const user = await User.findById(decoded.id);
+		const normalizedEmail = email.toLowerCase();
+		const user = await User.findOne({ email: normalizedEmail });
 		if (!user) {
-			const error = new Error('Usuario no encontrado.');
-			error.statusCode = 404;
-			return next(error);
+			return res.status(400).json({ message: 'Código inválido o expirado.' });
 		}
 
-		user.password = newPassword;
+		const now = new Date();
+		if (user.recoveryCodeBlockedUntil && user.recoveryCodeBlockedUntil > now) {
+			return res.status(429).json({
+				error: 'Demasiados intentos fallidos. Intenta nuevamente en unos minutos.',
+			});
+		}
+
+		if (!user.recoveryCode || !user.recoveryCodeExpires || user.recoveryCodeExpires < now) {
+			return res.status(400).json({ message: 'Código inválido o expirado.' });
+		}
+
+		const isMatch = await bcrypt.compare(code, user.recoveryCode);
+		if (!isMatch) {
+			user.recoveryCodeAttempts = (user.recoveryCodeAttempts || 0) + 1;
+			if (user.recoveryCodeAttempts >= 5) {
+				user.recoveryCodeBlockedUntil = new Date(now.getTime() + 15 * 60 * 1000); // 15 min
+			}
+			await user.save();
+			return res.status(400).json({ message: 'Código inválido o expirado.' });
+		}
+
+		user.codeVerified = true;
+		user.recoveryCodeAttempts = 0;
 		await user.save();
 
-		return res.status(200).json({ message: 'Contraseña restablecida exitosamente.' });
+		return res.status(200).json({ message: 'Código verificado correctamente.', success: true });
 	} catch (error) {
 		next(error);
 	}
 };
+
+export const resetPassword = async (req, res, next) => {
+	try {
+		const { email, newPassword } = req.body;
+
+		if (!email || !newPassword || typeof newPassword !== 'string') {
+			return res.status(400).json({ error: 'Datos inválidos.' });
+		}
+
+		const normalizedEmail = email.toLowerCase();
+		const user = await User.findOne({ email: normalizedEmail });
+		if (!user) {
+			return res.status(400).json({ error: 'Acción no permitida.' });
+		}
+
+		if (!user.codeVerified) {
+			return res.status(401).json({
+				error: 'Primero debes verificar el código de recuperación.',
+			});
+		}
+
+		// Comparar nueva contraseña con la actual (hasheada)
+		const isSamePassword = await bcrypt.compare(newPassword, user.password);
+		if (isSamePassword) {
+			return res.status(400).json({ error: 'La nueva contraseña debe ser distinta a la anterior.' });
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+		user.password = hashedPassword;
+		user.recoveryCode = undefined;
+		user.recoveryCodeExpires = undefined;
+		user.recoveryCodeAttempts = 0;
+		user.recoveryCodeBlockedUntil = undefined;
+		user.codeVerified = false;
+
+		await user.save();
+
+		return res.status(200).json({ message: 'Contraseña restablecida exitosamente.', success: true });
+	} catch (error) {
+		next(error);
+	}
+};
+
 
 export const logoutUser = (req, res) => {
 	res.clearCookie('token');

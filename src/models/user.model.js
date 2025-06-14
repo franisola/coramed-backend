@@ -82,6 +82,11 @@ const UserSchema = new mongoose.Schema(
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'HealthInsurance', // Relation with the ObraSocial model
 		},
+		recoveryCode: { type: String },
+		recoveryCodeExpires: { type: Date },
+		recoveryCodeAttempts: { type: Number, default: 0 },
+		recoveryCodeBlockedUntil: { type: Date },
+		codeVerified: { type: Boolean, default: false },
 	},
 	{
 		timestamps: true, // Automatically adds createdAt and updatedAt
