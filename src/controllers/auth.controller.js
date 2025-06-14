@@ -225,9 +225,9 @@ export const verifyCode = async (req, res, next) => {
 
 export const resetPassword = async (req, res, next) => {
 	try {
-		const { email, newPassword } = req.body;
+		const { email, password } = req.body;
 
-		if (!email || !newPassword || typeof newPassword !== 'string') {
+		if (!email || !password || typeof password !== 'string') {
 			return res.status(400).json({ error: 'Datos inválidos.' });
 		}
 
@@ -244,12 +244,12 @@ export const resetPassword = async (req, res, next) => {
 		}
 
 		// Comparar nueva contraseña con la actual (hasheada)
-		const isSamePassword = await bcrypt.compare(newPassword, user.password);
+		const isSamePassword = await bcrypt.compare(password, user.password);
 		if (isSamePassword) {
 			return res.status(400).json({ error: 'La nueva contraseña debe ser distinta a la anterior.' });
 		}
 
-		const hashedPassword = await bcrypt.hash(newPassword, 10);
+		const hashedPassword = await bcrypt.hash(password, 10);
 
 		user.password = hashedPassword;
 		user.recoveryCode = undefined;

@@ -76,7 +76,7 @@ export const resetPasswordSchema = z.object({
 		.nonempty('El correo electrónico es obligatorio')
 		.email('El correo electrónico debe ser válido')
 		.trim(),
-	newPassword: z
+	password: z
 		.string()
 		.nonempty('La nueva contraseña es obligatoria')
 		.min(6, 'La nueva contraseña debe tener al menos 6 caracteres')
