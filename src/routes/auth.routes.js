@@ -18,7 +18,7 @@ const router = Router();
  * @desc Get the user's profile
  * @access Private
  */
-router.get('/me', authController.getSessionUser);
+router.get('/me', authRequired, authController.getSessionUser);
 
 
 /**

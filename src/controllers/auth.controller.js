@@ -8,25 +8,32 @@ dotenv.config();
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
+// export const getSessionUser = async (req, res) => {
+// 	const token = req.headers.authorization?.split(' ')[1];
+
+// 	if (!token) {
+// 		return res.status(401).json({ isAuthenticated: false });
+// 	}
+
+// 	try {
+// 		const decoded = jwt.verify(token, TOKEN_SECRET);
+// 		const user = await User.findById(decoded.id).select('-password');
+
+// 		if (!user) {
+// 			return res.status(200).json({ isAuthenticated: false });
+// 		}
+
+// 		return res.status(200).json({ isAuthenticated: true, user });
+// 	} catch (err) {
+// 		return res.status(401).json({ isAuthenticated: false });
+// 	}
+// };
+
 export const getSessionUser = async (req, res) => {
-	const token = req.headers.authorization?.split(' ')[1];
+  const user = await User.findById(req.user.id).select('-password');
+  if (!user) return res.status(401).json({ isAuthenticated: false });
 
-	if (!token) {
-		return res.status(200).json({ isAuthenticated: false });
-	}
-
-	try {
-		const decoded = jwt.verify(token, TOKEN_SECRET);
-		const user = await User.findById(decoded.id).select('-password');
-
-		if (!user) {
-			return res.status(200).json({ isAuthenticated: false });
-		}
-
-		return res.status(200).json({ isAuthenticated: true, user });
-	} catch (err) {
-		return res.status(200).json({ isAuthenticated: false });
-	}
+  return res.status(200).json({ isAuthenticated: true, user });
 };
 
 export const createUser = async (req, res, next) => {
@@ -150,23 +157,20 @@ export const recoverPassword = async (req, res, next) => {
 			to: normalizedEmail,
 			subject: 'Código para restablecer tu contraseña',
 			html: `
-			<p>Hola ${user.nombre || 'Usuario'},</p>
-			<p>Tu código para restablecer la contraseña es:</p>
-			<h2>${recoveryCode}</h2>
-			<p>Este código es válido por 1 hora.</p>
-			<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+				<p>Hola ${user.nombreCompleto || 'Usuario'},</p>
+				<p>Tu código para restablecer la contraseña es:</p>
+				<h2>${recoveryCode}</h2>
+				<p>Este código es válido por 1 hora.</p>
+				<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
 			`,
 		};
 
-		transporter.sendMail(mailOptions, (error, info) => {
-			if (error) {
-				console.error('Error al enviar el correo:', error);
-			} else {
-				console.log('Correo enviado:', info.response);
-			}
-		});
-
-		await transporter.sendMail(mailOptions);
+		try {
+			const info = await transporter.sendMail(mailOptions);
+			console.log('Correo enviado:', info.response);
+		} catch (error) {
+			console.error('Error al enviar el correo:', error);
+		}
 
 		return res.status(200).json({
 			message: 'Si el correo está registrado, se enviará un código de recuperación.',
@@ -178,6 +182,7 @@ export const recoverPassword = async (req, res, next) => {
 		next(error);
 	}
 };
+
 
 export const verifyCode = async (req, res, next) => {
 	try {
