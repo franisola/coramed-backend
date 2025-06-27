@@ -116,7 +116,7 @@ export const updatePasswordSchema = z
 		password: z
 			.string()
 			.nonempty('La contraseña es obligatoria')
-			.min(6, 'La contraseña debe tener al menos 6 caracteres')
+			.min(8, 'La contraseña debe tener al menos 6 caracteres')
 			.max(100, 'La contraseña no puede tener más de 100 caracteres')
 			.trim(),
 		confirmPassword: z.string(),
