@@ -30,16 +30,25 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET;
 // };
 
 export const getSessionUser = async (req, res) => {
-	if (!req.user || !req.user.id) {
+	const token = req.headers.authorization?.split(' ')[1];
+
+	if (!token) {
 		return res.status(200).json({ isAuthenticated: false });
 	}
 
-	const user = await User.findById(req.user.id).select('-password');
-	if (!user) {
+	try {
+		const decoded = jwt.verify(token, TOKEN_SECRET);
+
+		const user = await User.findById(decoded.id).select('-password');
+
+		if (!user) {
+			return res.status(200).json({ isAuthenticated: false });
+		}
+
+		return res.status(200).json({ isAuthenticated: true, user });
+	} catch (err) {
 		return res.status(200).json({ isAuthenticated: false });
 	}
-
-	return res.status(200).json({ isAuthenticated: true, user });
 };
 
 export const createUser = async (req, res, next) => {
