@@ -5,7 +5,6 @@ import moment from 'moment';
 import 'moment/locale/es.js';
 moment.locale('es');
 
-// Create a new appointment
 export const createAppointment = async (req, res, next) => {
 	try {
 		const { paciente, profesional, fecha, hora, motivo_consulta, notas_medicas } = req.body;
@@ -14,6 +13,7 @@ export const createAppointment = async (req, res, next) => {
 		if (!professional) {
 			const error = new Error('Profesional no encontrado');
 			error.statusCode = 404;
+			error.code = 'PROFESSIONAL_NOT_FOUND';
 			return next(error);
 		}
 
@@ -23,6 +23,7 @@ export const createAppointment = async (req, res, next) => {
 		if (!professional.dias_laborales.includes(dayOfWeek)) {
 			const error = new Error(`El profesional no trabaja el día ${dayOfWeek}`);
 			error.statusCode = 400;
+			error.code = 'INVALID_WORKDAY';
 			return next(error);
 		}
 
@@ -32,6 +33,7 @@ export const createAppointment = async (req, res, next) => {
 		if (!isScheduleAvailable) {
 			const error = new Error('Horario no disponible');
 			error.statusCode = 400;
+			error.code = 'SCHEDULE_NOT_AVAILABLE';
 			return next(error);
 		}
 
@@ -45,6 +47,7 @@ export const createAppointment = async (req, res, next) => {
 		if (existingAppointment) {
 			const error = new Error('Ya existe un turno en esta fecha y hora con este profesional');
 			error.statusCode = 400;
+			error.code = 'APPOINTMENT_ALREADY_EXISTS';
 			return next(error);
 		}
 
@@ -62,11 +65,12 @@ export const createAppointment = async (req, res, next) => {
 
 		res.status(201).json({ message: 'Turno creado exitosamente', appointment: newAppointment });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'CREATE_APPOINTMENT_FAILED';
 		next(error);
 	}
 };
 
-// Get a specific appointment
 export const getAppointmentById = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
@@ -78,11 +82,14 @@ export const getAppointmentById = async (req, res, next) => {
 		if (!appointment) {
 			const error = new Error('Turno no encontrado');
 			error.statusCode = 404;
+			error.code = 'APPOINTMENT_NOT_FOUND';
 			return next(error);
 		}
 
 		res.status(200).json(appointment);
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'GET_APPOINTMENT_FAILED';
 		next(error);
 	}
 };
@@ -100,17 +107,14 @@ export const getNextAppointment = async (req, res, next) => {
 			.sort({ fecha: 1, hora: 1 })
 			.populate('profesional', 'nombre apellido especialidad');
 
-		if (!appointment) {
-			return res.status(200).json({ appointment: null });
-		}
-
-		res.status(200).json({ appointment });
+		res.status(200).json({ appointment: appointment || null });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'GET_NEXT_APPOINTMENT_FAILED';
 		next(error);
 	}
 };
 
-// Update the status of an appointment
 export const updateAppointmentStatus = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
@@ -119,14 +123,15 @@ export const updateAppointmentStatus = async (req, res, next) => {
 		if (!['Agendado', 'Cancelado', 'Completado'].includes(estado)) {
 			const error = new Error('Estado inválido');
 			error.statusCode = 400;
+			error.code = 'INVALID_STATUS';
 			return next(error);
 		}
 
 		const appointment = await Appointment.findById(appointmentId);
-
 		if (!appointment) {
 			const error = new Error('Turno no encontrado');
 			error.statusCode = 404;
+			error.code = 'APPOINTMENT_NOT_FOUND';
 			return next(error);
 		}
 
@@ -135,6 +140,7 @@ export const updateAppointmentStatus = async (req, res, next) => {
 				`No se puede cambiar el estado de un turno ${appointment.estado.toLowerCase()}`
 			);
 			error.statusCode = 400;
+			error.code = 'STATUS_NOT_CHANGEABLE';
 			return next(error);
 		}
 
@@ -147,21 +153,22 @@ export const updateAppointmentStatus = async (req, res, next) => {
 
 		res.status(200).json(updated);
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'UPDATE_STATUS_FAILED';
 		next(error);
 	}
 };
 
-// Add study results to an appointment
 export const addStudyResults = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
-		const { notas_medicas, resultados_estudios } = req.body; // ← ya validado
+		const { notas_medicas, resultados_estudios } = req.body;
 
 		const appointment = await Appointment.findById(appointmentId);
-
 		if (!appointment) {
 			const error = new Error('Turno no encontrado');
 			error.statusCode = 404;
+			error.code = 'APPOINTMENT_NOT_FOUND';
 			return next(error);
 		}
 
@@ -174,38 +181,36 @@ export const addStudyResults = async (req, res, next) => {
 				`No puedes registrar más de 10 estudios por turno (ya hay ${cantidadActual})`
 			);
 			error.statusCode = 400;
+			error.code = 'TOO_MANY_STUDIES';
 			return next(error);
 		}
-		if (cantidadNueva > 0) appointment.resultados_estudios.push(...resultados_estudios);
 
-		// Si hay nuevas notas médicas, se actualizan
-		if (notas_medicas) {
-			appointment.notas_medicas = notas_medicas;
-		}
+		if (cantidadNueva > 0) appointment.resultados_estudios.push(...resultados_estudios);
+		if (notas_medicas) appointment.notas_medicas = notas_medicas;
 
 		await appointment.save();
 
-		// Retornar el turno actualizado y poblado
 		const updated = await Appointment.findById(appointmentId)
 			.populate('profesional', 'nombre apellido especialidad')
 			.populate('paciente', 'nombre apellido email');
 
 		res.status(200).json(updated);
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'ADD_STUDY_FAILED';
 		next(error);
 	}
 };
 
-// Delete an appointment
 export const deleteAppointment = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
-
 		const appointment = await Appointment.findById(appointmentId);
 
 		if (!appointment) {
 			const error = new Error('Turno no encontrado');
 			error.statusCode = 404;
+			error.code = 'APPOINTMENT_NOT_FOUND';
 			return next(error);
 		}
 
@@ -213,15 +218,15 @@ export const deleteAppointment = async (req, res, next) => {
 
 		res.status(200).json({ message: 'Turno eliminado exitosamente' });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'DELETE_APPOINTMENT_FAILED';
 		next(error);
 	}
 };
 
-// Get the user's appointments, divided into upcoming and past
 export const getUserAppointments = async (req, res, next) => {
 	try {
 		const userId = req.user.id;
-
 		const appointments = await Appointment.find({ paciente: userId })
 			.populate('profesional', 'nombre apellido especialidad')
 			.sort({ fecha: 1, hora: 1 });
@@ -229,21 +234,19 @@ export const getUserAppointments = async (req, res, next) => {
 		const now = new Date();
 
 		const pastAppointments = appointments.filter((appointment) => {
-			const appointmentDateTime = new Date(
+			const dateTime = new Date(
 				`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`
 			);
 			return (
-				appointment.estado === 'Completado' ||
-				appointment.estado === 'Cancelado' ||
-				appointmentDateTime < now
+				appointment.estado !== 'Agendado' || dateTime < now
 			);
 		});
 
 		const upcomingAppointments = appointments.filter((appointment) => {
-			const appointmentDateTime = new Date(
+			const dateTime = new Date(
 				`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`
 			);
-			return appointment.estado === 'Agendado' && appointmentDateTime >= now;
+			return appointment.estado === 'Agendado' && dateTime >= now;
 		});
 
 		res.status(200).json({
@@ -251,6 +254,8 @@ export const getUserAppointments = async (req, res, next) => {
 			proximos: upcomingAppointments,
 		});
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'GET_USER_APPOINTMENTS_FAILED';
 		next(error);
 	}
 };

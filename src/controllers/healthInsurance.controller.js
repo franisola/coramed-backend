@@ -10,11 +10,14 @@ export const getHealthInsurance = async (req, res, next) => {
 		if (!user) {
 			const error = new Error('Usuario no encontrado');
 			error.statusCode = 404;
+			error.code = 'USER_NOT_FOUND';
 			return next(error);
 		}
 
 		res.status(200).json(user.obra_social || null);
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'GET_HEALTH_INSURANCE_FAILED';
 		next(error);
 	}
 };
@@ -67,6 +70,7 @@ export const deleteHealthInsurance = async (req, res, next) => {
 		if (!user || !user.obra_social) {
 			const error = new Error('Obra social no encontrada');
 			error.statusCode = 404;
+			error.code = 'HEALTH_INSURANCE_NOT_FOUND';
 			return next(error);
 		}
 
@@ -76,6 +80,8 @@ export const deleteHealthInsurance = async (req, res, next) => {
 
 		res.status(200).json({ message: 'Obra social eliminada exitosamente' });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'DELETE_HEALTH_INSURANCE_FAILED';
 		next(error);
 	}
 };

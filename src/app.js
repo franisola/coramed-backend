@@ -2,6 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
 export default app;
@@ -36,12 +37,13 @@ import routes from './routes/main.routes.js';
 app.use('/api', routes); // Mount main routes under /api
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
-    const error = err.message || 'Error interno del servidor'; 
-    return res.status(statusCode).json({
-        success: false,
-        error,
-        statusCode,
-    });
-});
+// app.use((err, req, res, next) => {
+//     const statusCode = err.statusCode || 500;
+//     const error = err.message || 'Error interno del servidor'; 
+//     return res.status(statusCode).json({
+//         success: false,
+//         error,
+//         statusCode,
+//     });
+// });
+app.use(errorHandler); // Custom error handler

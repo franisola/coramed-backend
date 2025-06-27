@@ -30,33 +30,26 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET;
 // };
 
 export const getSessionUser = async (req, res) => {
-  const user = await User.findById(req.user.id).select('-password');
-  if (!user) return res.status(401).json({ isAuthenticated: false });
+	const user = await User.findById(req.user.id).select('-password');
+	if (!user) return res.status(200).json({ isAuthenticated: false });
 
-  return res.status(200).json({ isAuthenticated: true, user });
+	return res.status(200).json({ isAuthenticated: true, user });
 };
 
 export const createUser = async (req, res, next) => {
 	try {
 		const { dni, email, password, genero, nombreCompleto } = req.body;
 		const normalizedEmail = email.toLowerCase();
-
 		const existingUser = await User.findOne({ email: normalizedEmail });
 
 		if (existingUser) {
 			const error = new Error('Ya existe un usuario con este correo electrónico.');
-			error.statusCode = 404;
+			error.statusCode = 409;
+			error.code = 'USER_ALREADY_EXISTS';
 			return next(error);
 		}
 
-		const newUser = new User({
-			dni,
-			email: normalizedEmail,
-			password,
-			genero,
-			nombreCompleto,
-		});
-
+		const newUser = new User({ dni, email: normalizedEmail, password, genero, nombreCompleto });
 		await newUser.save();
 
 		const token = jwt.sign({ id: newUser._id, email: newUser.email }, TOKEN_SECRET, {
@@ -70,11 +63,10 @@ export const createUser = async (req, res, next) => {
 			maxAge: 24 * 60 * 60 * 1000,
 		});
 
-		return res.status(201).json({ message: 'Usuario creado exitosamente.', token });
+		res.status(201).json({ message: 'Usuario creado exitosamente.', token });
 	} catch (error) {
-		if (error.name === 'ValidationError') {
-			error.statusCode = 400;
-		}
+		error.statusCode = 500;
+		error.code = 'CREATE_USER_FAILED';
 		next(error);
 	}
 };
@@ -83,19 +75,20 @@ export const loginUser = async (req, res, next) => {
 	try {
 		const { email, password } = req.body;
 		const normalizedEmail = email.toLowerCase();
-
 		const user = await User.findOne({ email: normalizedEmail });
+
 		if (!user) {
 			const error = new Error('Usuario no encontrado.');
 			error.statusCode = 404;
+			error.code = 'USER_NOT_FOUND';
 			return next(error);
 		}
 
 		const isPasswordValid = await user.comparePassword(password);
-
 		if (!isPasswordValid) {
 			const error = new Error('Credenciales incorrectas.');
 			error.statusCode = 401;
+			error.code = 'INVALID_CREDENTIALS';
 			return next(error);
 		}
 
@@ -110,8 +103,10 @@ export const loginUser = async (req, res, next) => {
 			maxAge: 24 * 60 * 60 * 1000,
 		});
 
-		return res.status(200).json({ message: 'Login exitoso.', token });
+		res.status(200).json({ message: 'Login exitoso.', token });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'LOGIN_FAILED';
 		next(error);
 	}
 };
@@ -120,13 +115,15 @@ export const recoverPassword = async (req, res, next) => {
 	try {
 		const { email } = req.body;
 		if (!email || typeof email !== 'string') {
-			return res.status(400).json({ error: 'Email inválido.' });
+			const error = new Error('Email inválido.');
+			error.statusCode = 400;
+			error.code = 'INVALID_EMAIL';
+			return next(error);
 		}
 		const normalizedEmail = email.toLowerCase();
-
 		const user = await User.findOne({ email: normalizedEmail });
+
 		if (!user) {
-			// Mensaje genérico por seguridad
 			return res.status(200).json({
 				message: 'Si el correo está registrado, se enviará un código de recuperación.',
 			});
@@ -134,7 +131,7 @@ export const recoverPassword = async (req, res, next) => {
 
 		const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
 		const hashedCode = await bcrypt.hash(recoveryCode, 10);
-		const expiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+		const expiration = new Date(Date.now() + 60 * 60 * 1000);
 
 		user.recoveryCode = hashedCode;
 		user.recoveryCodeExpires = expiration;
@@ -147,8 +144,8 @@ export const recoverPassword = async (req, res, next) => {
 		const transporter = nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
-				user: 'turnosmedicosapp@gmail.com',
-				pass: 'cpbi pxiu uvpr dswv',
+				user: process.env.EMAIL_USER,
+				pass: process.env.EMAIL_PASS,
 			},
 		});
 
@@ -165,103 +162,111 @@ export const recoverPassword = async (req, res, next) => {
 			`,
 		};
 
-		try {
-			const info = await transporter.sendMail(mailOptions);
-			console.log('Correo enviado:', info.response);
-		} catch (error) {
-			console.error('Error al enviar el correo:', error);
-		}
+		await transporter.sendMail(mailOptions);
 
-		return res.status(200).json({
+		res.status(200).json({
 			message: 'Si el correo está registrado, se enviará un código de recuperación.',
 			success: true,
 		});
 	} catch (error) {
 		error.statusCode = 500;
-		error.message = 'Error al enviar el código de recuperación.';
+		error.code = 'RECOVERY_FAILED';
 		next(error);
 	}
 };
-
 
 export const verifyCode = async (req, res, next) => {
 	try {
 		const { email, code } = req.body;
 
-		if (!email || typeof email !== 'string' || !code || typeof code !== 'string') {
-			return res.status(400).json({ error: 'Datos inválidos.' });
+		if (!email || !code || typeof email !== 'string' || typeof code !== 'string') {
+			const error = new Error('Datos inválidos.');
+			error.statusCode = 400;
+			error.code = 'INVALID_INPUT';
+			return next(error);
 		}
 
-		const normalizedEmail = email.toLowerCase();
-		const user = await User.findOne({ email: normalizedEmail });
+		const user = await User.findOne({ email: email.toLowerCase() });
 		if (!user) {
-			return res.status(400).json({ message: 'Código inválido o expirado.' });
+			const error = new Error('Código inválido o expirado.');
+			error.statusCode = 400;
+			error.code = 'INVALID_CODE';
+			return next(error);
 		}
 
 		const now = new Date();
 		if (user.recoveryCodeBlockedUntil && user.recoveryCodeBlockedUntil > now) {
-			return res.status(429).json({
-				error: 'Demasiados intentos fallidos. Intenta nuevamente en unos minutos.',
-			});
+			const error = new Error('Demasiados intentos fallidos. Intenta nuevamente más tarde.');
+			error.statusCode = 429;
+			error.code = 'TOO_MANY_ATTEMPTS';
+			return next(error);
 		}
 
 		if (!user.recoveryCode || !user.recoveryCodeExpires || user.recoveryCodeExpires < now) {
-			return res.status(400).json({ message: 'Código inválido o expirado.' });
+			const error = new Error('Código inválido o expirado.');
+			error.statusCode = 400;
+			error.code = 'CODE_EXPIRED';
+			return next(error);
 		}
 
 		const isMatch = await bcrypt.compare(code, user.recoveryCode);
 		if (!isMatch) {
 			user.recoveryCodeAttempts = (user.recoveryCodeAttempts || 0) + 1;
 			if (user.recoveryCodeAttempts >= 5) {
-				user.recoveryCodeBlockedUntil = new Date(now.getTime() + 15 * 60 * 1000); // 15 min
+				user.recoveryCodeBlockedUntil = new Date(now.getTime() + 15 * 60 * 1000);
 			}
 			await user.save();
-			return res.status(400).json({ message: 'Código inválido o expirado.' });
+			const error = new Error('Código inválido o expirado.');
+			error.statusCode = 400;
+			error.code = 'INVALID_CODE';
+			return next(error);
 		}
 
 		user.codeVerified = true;
 		user.recoveryCodeAttempts = 0;
 		await user.save();
 
-		return res.status(200).json({ message: 'Código verificado correctamente.', success: true });
+		res.status(200).json({ message: 'Código verificado correctamente.', success: true });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'VERIFY_CODE_FAILED';
 		next(error);
 	}
 };
-
 export const resetPassword = async (req, res, next) => {
 	try {
 		const { email, password } = req.body;
-
 		if (!email || !password || typeof password !== 'string') {
-			return res.status(400).json({ error: 'Datos inválidos.' });
+			const error = new Error('Datos inválidos.');
+			error.statusCode = 400;
+			error.code = 'INVALID_INPUT';
+			return next(error);
 		}
 
-		const normalizedEmail = email.toLowerCase();
-		const user = await User.findOne({ email: normalizedEmail });
+		const user = await User.findOne({ email: email.toLowerCase() });
 		if (!user) {
-			return res.status(400).json({ error: 'Acción no permitida.' });
+			const error = new Error('Acción no permitida.');
+			error.statusCode = 400;
+			error.code = 'USER_NOT_FOUND';
+			return next(error);
 		}
 
 		if (!user.codeVerified) {
-			return res.status(401).json({
-				error: 'Primero debes verificar el código de recuperación.',
-			});
+			const error = new Error('Primero debes verificar el código de recuperación.');
+			error.statusCode = 401;
+			error.code = 'CODE_NOT_VERIFIED';
+			return next(error);
 		}
 
-		// Comparar nueva contraseña con la actual (hasheada)
 		const isSamePassword = await user.comparePassword(password);
-
 		if (isSamePassword) {
-			return res
-				.status(400)
-				.json({ error: 'La nueva contraseña debe ser distinta a la anterior.' });
+			const error = new Error('La nueva contraseña debe ser distinta a la anterior.');
+			error.statusCode = 400;
+			error.code = 'PASSWORD_SAME_AS_OLD';
+			return next(error);
 		}
 
-		// const hashedPassword = await bcrypt.hash(password, 10);
-		user.password = password; 
-
-
+		user.password = password;
 		user.recoveryCode = undefined;
 		user.recoveryCodeExpires = undefined;
 		user.recoveryCodeAttempts = 0;
@@ -270,10 +275,10 @@ export const resetPassword = async (req, res, next) => {
 
 		await user.save();
 
-		return res
-			.status(200)
-			.json({ message: 'Contraseña restablecida exitosamente.', success: true });
+		res.status(200).json({ message: 'Contraseña restablecida exitosamente.', success: true });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'RESET_PASSWORD_FAILED';
 		next(error);
 	}
 };
@@ -286,18 +291,19 @@ export const logoutUser = (req, res) => {
 export const deleteAccount = async (req, res, next) => {
 	try {
 		const userId = req.user.id;
-
 		const user = await User.findById(userId);
 		if (!user) {
 			const error = new Error('Usuario no encontrado.');
 			error.statusCode = 404;
+			error.code = 'USER_NOT_FOUND';
 			return next(error);
 		}
 
 		await User.findByIdAndDelete(userId);
-
 		res.status(200).json({ message: 'Cuenta eliminada exitosamente.' });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'DELETE_ACCOUNT_FAILED';
 		next(error);
 	}
 };

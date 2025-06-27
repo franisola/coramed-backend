@@ -10,27 +10,30 @@ export const getUserProfile = async (req, res, next) => {
 		if (!user) {
 			const error = new Error('Usuario no encontrado');
 			error.statusCode = 404;
+			error.code = 'USER_NOT_FOUND';
 			return next(error);
 		}
 
 		res.status(200).json(user);
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'GET_USER_PROFILE_FAILED';
 		next(error);
 	}
 };
+
 
 // Update the user's profile
 export const updateUserProfile = async (req, res, next) => {
 	try {
 		const userId = req.user.id;
-		const { nombreCompleto, dni, fechaNacimiento, genero, direccion, telefono, password } =
-			req.body;
+		const { nombreCompleto, dni, fechaNacimiento, genero, direccion, telefono, password } = req.body;
 
 		const user = await User.findById(userId);
-
 		if (!user) {
 			const error = new Error('Usuario no encontrado');
 			error.statusCode = 404;
+			error.code = 'USER_NOT_FOUND';
 			return next(error);
 		}
 
@@ -40,15 +43,14 @@ export const updateUserProfile = async (req, res, next) => {
 		if (genero) user.genero = genero;
 		if (direccion) user.direccion = direccion;
 		if (telefono) user.telefono = telefono;
-
-		if (password) {
-			user.password = password;
-		}
+		if (password) user.password = password;
 
 		await user.save();
 
 		res.status(200).json({ message: 'Perfil actualizado exitosamente', user });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'UPDATE_USER_PROFILE_FAILED';
 		next(error);
 	}
 };
@@ -59,10 +61,10 @@ export const deleteUser = async (req, res, next) => {
 		const userId = req.user.id;
 
 		const user = await User.findById(userId);
-
 		if (!user) {
 			const error = new Error('Usuario no encontrado');
 			error.statusCode = 404;
+			error.code = 'USER_NOT_FOUND';
 			return next(error);
 		}
 
@@ -70,6 +72,8 @@ export const deleteUser = async (req, res, next) => {
 
 		res.status(200).json({ message: 'Cuenta eliminada exitosamente' });
 	} catch (error) {
+		error.statusCode = 500;
+		error.code = 'DELETE_USER_FAILED';
 		next(error);
 	}
 };
