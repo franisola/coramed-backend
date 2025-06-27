@@ -30,8 +30,14 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET;
 // };
 
 export const getSessionUser = async (req, res) => {
+	if (!req.user || !req.user.id) {
+		return res.status(200).json({ isAuthenticated: false });
+	}
+
 	const user = await User.findById(req.user.id).select('-password');
-	if (!user) return res.status(200).json({ isAuthenticated: false });
+	if (!user) {
+		return res.status(200).json({ isAuthenticated: false });
+	}
 
 	return res.status(200).json({ isAuthenticated: true, user });
 };
