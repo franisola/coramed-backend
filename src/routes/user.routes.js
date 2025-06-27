@@ -1,11 +1,8 @@
-import { Router } from "express";
-import * as userController from "../controllers/user.controller.js";
-import { authRequired } from "../jwt/auth.service.js";
-import { validateSchema } from "../middlewares/validator.middleware.js";
-import { 
-    updateUserProfileSchema, 
-    deleteUserSchema 
-} from "../schemas/user.schema.js";
+import { Router } from 'express';
+import * as userController from '../controllers/user.controller.js';
+import { authRequired } from '../jwt/auth.service.js';
+import { validateSchema } from '../middlewares/validator.middleware.js';
+import { validateDynamicUserUpdate } from '../middlewares/validateDynamicUserUpdate.js';
 
 const router = Router();
 
@@ -22,23 +19,22 @@ const router = Router();
  * @access Private
  */
 router.put(
-    "/profile", 
-    authRequired, 
-    validateSchema(updateUserProfileSchema), // Valida req.body
-    userController.updateUserProfile
+	'/profile',
+	authRequired,
+	validateDynamicUserUpdate, // Valida req.body
+	userController.updateUserProfile
 );
 
-
-/**
- * @route DELETE /user/profile
- * @desc Delete the user's account
- * @access Private
- */
-router.delete(
-    "/profile", 
-    authRequired, 
-    validateSchema(deleteUserSchema), // Valida req.body
-    userController.deleteUser
-);
+// /**
+//  * @route DELETE /user/profile
+//  * @desc Delete the user's account
+//  * @access Private
+//  */
+// router.delete(
+//     "/profile",
+//     authRequired,
+//     validateSchema(deleteUserSchema), // Valida req.body
+//     userController.deleteUser
+// );
 
 export default router;

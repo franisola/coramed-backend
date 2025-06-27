@@ -23,7 +23,8 @@ export const getUserProfile = async (req, res, next) => {
 export const updateUserProfile = async (req, res, next) => {
 	try {
 		const userId = req.user.id;
-		const { nombre, apellido, fechaNacimiento, genero, direccion, telefono } = req.body;
+		const { nombreCompleto, dni, fechaNacimiento, genero, direccion, telefono, password } =
+			req.body;
 
 		const user = await User.findById(userId);
 
@@ -33,12 +34,16 @@ export const updateUserProfile = async (req, res, next) => {
 			return next(error);
 		}
 
-		user.nombre = nombre || user.nombre;
-		user.apellido = apellido || user.apellido;
-		user.fechaNacimiento = fechaNacimiento || user.fechaNacimiento;
-		user.genero = genero || user.genero;
-		user.direccion = direccion || user.direccion;
-		user.telefono = telefono || user.telefono;
+		if (nombreCompleto) user.nombreCompleto = nombreCompleto.trim();
+		if (dni) user.dni = dni;
+		if (fechaNacimiento) user.fechaNacimiento = fechaNacimiento;
+		if (genero) user.genero = genero;
+		if (direccion) user.direccion = direccion;
+		if (telefono) user.telefono = telefono;
+
+		if (password) {
+			user.password = password;
+		}
 
 		await user.save();
 
