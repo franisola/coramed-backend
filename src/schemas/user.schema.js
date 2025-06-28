@@ -87,10 +87,14 @@ export const updatePersonalSchema = z.object({
 		.optional(),
 
 	fechaNacimiento: z
-		.date()
-		.refine((fecha) => fecha < new Date(), {
-			message: 'La fecha de nacimiento debe ser anterior a hoy.',
-		})
+		.string()
+		.refine(
+			(dateStr) => {
+				const date = new Date(dateStr);
+				return !isNaN(date.getTime()) && date < new Date();
+			},
+			{ message: 'La fecha de nacimiento debe ser una fecha válida anterior a hoy.' }
+		)
 		.optional(),
 
 	genero: z

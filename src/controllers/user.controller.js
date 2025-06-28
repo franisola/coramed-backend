@@ -39,7 +39,7 @@ export const updateUserProfile = async (req, res, next) => {
 
 		if (nombreCompleto) user.nombreCompleto = nombreCompleto.trim();
 		if (dni) user.dni = dni;
-		if (fechaNacimiento) user.fechaNacimiento = fechaNacimiento;
+		if (fechaNacimiento) user.fechaNacimiento = new Date(fechaNacimiento);
 		if (genero) user.genero = genero;
 		if (direccion) user.direccion = direccion;
 		if (telefono) user.telefono = telefono;
