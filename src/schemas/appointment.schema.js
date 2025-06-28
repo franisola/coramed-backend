@@ -52,15 +52,38 @@ export const addStudyResultsSchema = z.object({
 				pdf: z
 					.string()
 					.url('El archivo debe ser una URL válida')
-					.refine((val) => val.endsWith('.pdf'), {
-						message: 'El archivo debe ser un PDF (.pdf)',
-					}),
+					.refine(
+						(val) => {
+							// Permitir que termine en .pdf o tenga query params tras .pdf
+							if (/\.pdf(\?.*)?$/.test(val)) return true;
+							// Permitir links de Google Drive
+							if (val.includes('drive.google.com')) return true;
+							// Permitir links de Dropbox con .pdf y query params
+							if (/dropbox.com/.test(val) && /\.pdf(\?.*)?$/.test(val)) return true;
+							return false;
+						},
+						{
+							message:
+								'El archivo debe ser un PDF (.pdf) o un link válido de Google Drive o Dropbox',
+						}
+					),
 				fecha_carga: z.string().refine((fecha) => new Date(fecha) <= new Date(), {
 					message: 'La fecha de carga no puede ser una fecha futura',
 				}),
 			})
 		)
 		.max(10, 'No puedes registrar más de 10 estudios por turno'),
+
+	motivo_consulta: z.undefined(),
+	profesional: z.undefined(),
+	paciente: z.undefined(),
+	estado: z.undefined(),
+	fecha: z.undefined(),
+	hora: z.undefined(),
+	_id: z.undefined(),
+	createdAt: z.undefined(),
+	updatedAt: z.undefined(),
+	__v: z.undefined(),
 });
 
 // Esquema para eliminar un turno
