@@ -4,7 +4,7 @@ import { sendPushNotification } from "./pushNotification.js";
 import moment from "moment";
 
 // Todos los días a las 9:00 AM
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 9 * * *", async () => {
   try {
     const hoy = moment().startOf("day");
     const mañana = moment(hoy).add(1, "day");
