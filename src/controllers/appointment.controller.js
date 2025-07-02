@@ -67,6 +67,10 @@ export const createAppointment = async (req, res, next) => {
 		});
 
 		await newAppointment.save();
+		await newAppointment.populate([
+			{ path: 'profesional', select: 'nombre apellido especialidad' },
+			{ path: 'paciente', select: 'nombreCompleto email' },
+		]);
 		await sendAppointmentEmail({
 			to: user.email,
 			subject: 'Confirmación de turno',
@@ -78,7 +82,10 @@ export const createAppointment = async (req, res, next) => {
 			action: 'confirmado',
 		});
 
-		res.status(201).json({ message: 'Turno creado exitosamente', appointment: newAppointment });
+		res.status(201).json({
+			message: 'Turno creado exitosamente',
+			appointment: newAppointment,
+		});
 	} catch (error) {
 		error.statusCode = 500;
 		error.code = 'CREATE_APPOINTMENT_FAILED';
