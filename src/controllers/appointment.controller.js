@@ -6,7 +6,7 @@ import moment from 'moment';
 import 'moment/locale/es.js';
 moment.locale('es');
 
-import { sendEmail } from '../utils/sendEmail.js';
+import { sendAppointmentEmail, sendEmail } from '../utils/sendEmail.js';
 
 export const createAppointment = async (req, res, next) => {
 	try {
@@ -67,17 +67,16 @@ export const createAppointment = async (req, res, next) => {
 		});
 
 		await newAppointment.save();
-		await sendEmail(
-			user.email,
-			'Confirmación de turno',
-			`
-		<p>Hola ${user.nombreCompleto},</p>
-		<p>Tu turno con <strong>${professional.nombre} ${professional.apellido}</strong> ha sido registrado exitosamente.</p>
-		<p><strong>Fecha:</strong> ${fecha}</p>
-		<p><strong>Hora:</strong> ${hora}</p>
-		<p>Gracias por usar nuestra app.</p>
-	`
-		);
+		await sendAppointmentEmail({
+			to: user.email,
+			subject: 'Confirmación de turno',
+			appointment: {
+				paciente: user,
+				fecha,
+				hora,
+			},
+			action: 'confirmado',
+		});
 
 		res.status(201).json({ message: 'Turno creado exitosamente', appointment: newAppointment });
 	} catch (error) {
@@ -165,17 +164,16 @@ export const updateAppointmentStatus = async (req, res, next) => {
 		await appointment.save();
 
 		if (estado === 'Cancelado') {
-			// await sendPushNotification(
-			// 	user.expoPushToken,
-			// 	'Turno cancelado',
-			// 	'Tu turno fue cancelado.'
-			// );
-			await sendEmail(
-				user.email,
-				'Cancelación de turno',
-				`<p>Hola ${user.nombreCompleto},</p>
-		<p>Tu turno programado para el <strong>${appointment.fecha}</strong> a las <strong>${appointment.hora}</strong> ha sido <strong>cancelado</strong>.</p>`
-			);
+			await sendAppointmentEmail({
+				to: user.email,
+				subject: 'Cancelación de turno',
+				appointment: {
+					paciente: user,
+					fecha: appointment.fecha,
+					hora: appointment.hora,
+				},
+				action: 'cancelado',
+			});
 		}
 
 		const updated = await Appointment.findById(appointmentId)
@@ -221,12 +219,13 @@ export const addStudyResults = async (req, res, next) => {
 		if (notas_medicas) appointment.notas_medicas = notas_medicas;
 
 		await appointment.save();
+		const fechaLegible = moment(appointment.fecha).format('dddd D [de] MMMM [de] YYYY');
 
 		await sendEmail(
 			user.email,
 			'Resultados médicos disponibles',
 			`<p>Hola ${user.nombreCompleto},</p>
-	<p>Tu profesional ha subido resultados médicos a tu turno del <strong>${appointment.fecha}</strong>.</p>
+	<p>Tu profesional ha subido resultados médicos a tu turno del <strong>${fechaLegible}</strong>.</p>
 	<p>Podés consultarlos en la app.</p>`
 		);
 
