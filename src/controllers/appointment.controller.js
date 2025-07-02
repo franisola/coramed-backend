@@ -1,5 +1,6 @@
 import Appointment from '../models/appointment.model.js';
 import Professional from '../models/professional.model.js';
+import User from '../models/user.model.js';
 import { calculateBaseSchedules } from '../utils/validationUtils.js';
 import moment from 'moment';
 import 'moment/locale/es.js';
@@ -11,7 +12,7 @@ export const createAppointment = async (req, res, next) => {
 	try {
 		const { paciente, profesional, fecha, hora, motivo_consulta, notas_medicas } = req.body;
 
-		const user = req.user;
+		const user = await User.findById(req.user.id);
 
 		const professional = await Professional.findById(profesional);
 		if (!professional) {
@@ -134,6 +135,7 @@ export const updateAppointmentStatus = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
 		const { estado } = req.body;
+		const user = await User.findById(req.user.id);
 
 		if (!['Agendado', 'Cancelado', 'Completado'].includes(estado)) {
 			const error = new Error('Estado inválido');
@@ -192,6 +194,7 @@ export const addStudyResults = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
 		const { notas_medicas, resultados_estudios } = req.body;
+		const user = await User.findById(req.user.id);
 
 		const appointment = await Appointment.findById(appointmentId);
 		if (!appointment) {
