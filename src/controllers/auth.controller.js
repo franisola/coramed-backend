@@ -3,7 +3,7 @@ import User from '../models/user.model.js';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
-
+import { sendEmail } from '../utils/sendEmail.js';
 dotenv.config();
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
@@ -156,28 +156,21 @@ export const recoverPassword = async (req, res, next) => {
 
 		await user.save();
 
-		const transporter = nodemailer.createTransport({
-			service: 'gmail',
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-		});
-
-		const mailOptions = {
-			from: 'turnosmedicosapp@gmail.com',
-			to: normalizedEmail,
-			subject: 'Código para restablecer tu contraseña',
-			html: `
-				<p>Hola ${user.nombreCompleto || 'Usuario'},</p>
+		try {
+			await sendEmail(
+				normalizedEmail,
+				'Código para restablecer tu contraseña',
+				`
+				<p>Hola ${user.nombreCompleto || 'usuario'},</p>
 				<p>Tu código para restablecer la contraseña es:</p>
 				<h2>${recoveryCode}</h2>
 				<p>Este código es válido por 1 hora.</p>
 				<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
-			`,
-		};
-
-		await transporter.sendMail(mailOptions);
+			`
+			);
+		} catch (mailError) {
+			console.error('Error enviando el mail de recuperación:', mailError);
+		}
 
 		res.status(200).json({
 			message: 'Si el correo está registrado, se enviará un código de recuperación.',

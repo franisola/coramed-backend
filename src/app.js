@@ -3,6 +3,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { errorHandler } from "./middlewares/error.middleware.js";
+import "./utils/nodeCron.js"
 
 const app = express();
 export default app;

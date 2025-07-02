@@ -87,6 +87,10 @@ const UserSchema = new mongoose.Schema(
 		recoveryCodeAttempts: { type: Number, default: 0 },
 		recoveryCodeBlockedUntil: { type: Date },
 		codeVerified: { type: Boolean, default: false },
+		expoPushToken: {
+			type: String,
+			default: null,
+		},
 	},
 	{
 		timestamps: true, // Automatically adds createdAt and updatedAt

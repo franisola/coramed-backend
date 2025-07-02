@@ -5,9 +5,13 @@ import moment from 'moment';
 import 'moment/locale/es.js';
 moment.locale('es');
 
+import { sendEmail } from '../utils/sendEmail.js';
+
 export const createAppointment = async (req, res, next) => {
 	try {
 		const { paciente, profesional, fecha, hora, motivo_consulta, notas_medicas } = req.body;
+
+		const user = req.user;
 
 		const professional = await Professional.findById(profesional);
 		if (!professional) {
@@ -52,7 +56,7 @@ export const createAppointment = async (req, res, next) => {
 		}
 
 		const newAppointment = new Appointment({
-			paciente: req.user.id,
+			paciente: user.id,
 			profesional,
 			especialidad: professional.especialidad,
 			fecha,
@@ -62,6 +66,17 @@ export const createAppointment = async (req, res, next) => {
 		});
 
 		await newAppointment.save();
+		await sendEmail(
+			user.email,
+			'Confirmación de turno',
+			`
+		<p>Hola ${user.nombreCompleto},</p>
+		<p>Tu turno con <strong>${professional.nombre} ${professional.apellido}</strong> ha sido registrado exitosamente.</p>
+		<p><strong>Fecha:</strong> ${fecha}</p>
+		<p><strong>Hora:</strong> ${hora}</p>
+		<p>Gracias por usar nuestra app.</p>
+	`
+		);
 
 		res.status(201).json({ message: 'Turno creado exitosamente', appointment: newAppointment });
 	} catch (error) {
@@ -147,6 +162,20 @@ export const updateAppointmentStatus = async (req, res, next) => {
 		appointment.estado = estado;
 		await appointment.save();
 
+		if (estado === 'Cancelado') {
+			// await sendPushNotification(
+			// 	user.expoPushToken,
+			// 	'Turno cancelado',
+			// 	'Tu turno fue cancelado.'
+			// );
+			await sendEmail(
+				user.email,
+				'Cancelación de turno',
+				`<p>Hola ${user.nombreCompleto},</p>
+		<p>Tu turno programado para el <strong>${appointment.fecha}</strong> a las <strong>${appointment.hora}</strong> ha sido <strong>cancelado</strong>.</p>`
+			);
+		}
+
 		const updated = await Appointment.findById(appointmentId)
 			.populate('profesional', 'nombre apellido especialidad')
 			.populate('paciente', 'nombreCompleto email');
@@ -189,6 +218,14 @@ export const addStudyResults = async (req, res, next) => {
 		if (notas_medicas) appointment.notas_medicas = notas_medicas;
 
 		await appointment.save();
+
+		await sendEmail(
+			user.email,
+			'Resultados médicos disponibles',
+			`<p>Hola ${user.nombreCompleto},</p>
+	<p>Tu profesional ha subido resultados médicos a tu turno del <strong>${appointment.fecha}</strong>.</p>
+	<p>Podés consultarlos en la app.</p>`
+		);
 
 		const updated = await Appointment.findById(appointmentId)
 			.populate('profesional', 'nombre apellido especialidad')
@@ -237,9 +274,7 @@ export const getUserAppointments = async (req, res, next) => {
 			const dateTime = new Date(
 				`${appointment.fecha.toISOString().split('T')[0]}T${appointment.hora}`
 			);
-			return (
-				appointment.estado !== 'Agendado' || dateTime < now
-			);
+			return appointment.estado !== 'Agendado' || dateTime < now;
 		});
 
 		const upcomingAppointments = appointments.filter((appointment) => {

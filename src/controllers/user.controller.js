@@ -22,12 +22,12 @@ export const getUserProfile = async (req, res, next) => {
 	}
 };
 
-
 // Update the user's profile
 export const updateUserProfile = async (req, res, next) => {
 	try {
 		const userId = req.user.id;
-		const { nombreCompleto, dni, fechaNacimiento, genero, direccion, telefono, password } = req.body;
+		const { nombreCompleto, dni, fechaNacimiento, genero, direccion, telefono, password } =
+			req.body;
 
 		const user = await User.findById(userId);
 		if (!user) {
@@ -76,4 +76,33 @@ export const deleteUser = async (req, res, next) => {
 		error.code = 'DELETE_USER_FAILED';
 		next(error);
 	}
+};
+
+export const updatePushToken = async (req, res, next) => {
+  const userId = req.user.id;
+  const { token } = req.body;
+
+  if (!token) {
+    const error = new Error('Faltan datos: token es obligatorio');
+    error.statusCode = 400;
+    error.code = 'MISSING_DATA';
+    return next(error);
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(userId, { expoPushToken: token }, { new: true });
+
+    if (!user) {
+      const error = new Error('Usuario no encontrado');
+      error.statusCode = 404;
+      error.code = 'USER_NOT_FOUND';
+      return next(error);
+    }
+
+    res.status(200).json({ message: 'Token actualizado', expoPushToken: user.expoPushToken });
+  } catch (error) {
+    error.statusCode = 500;
+    error.code = 'UPDATE_PUSH_TOKEN_FAILED';
+    next(error);
+  }
 };
