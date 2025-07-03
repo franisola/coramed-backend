@@ -89,9 +89,9 @@ export const createAppointment = async (req, res, next) => {
 			mensaje: `Tu turno fue confirmado para el ${moment(fecha).format(
 				'DD/MM/YYYY'
 			)} a las ${hora}.`,
-			tipo: 'recordatorio',
+			tipo: 'Turno_Agendado',
 			turno: newAppointment._id,
-			
+
 		});
 
 		res.status(201).json({
@@ -200,7 +200,7 @@ export const updateAppointmentStatus = async (req, res, next) => {
 				mensaje: `El turno previsto para el ${appointment.fecha.toLocaleDateString()} a las ${
 					appointment.hora
 				} fue cancelado.`,
-				tipo: 'estado-turno',
+				tipo: 'Turno_Cancelado',
 				turno: appointment._id,
 			});
 		}
@@ -265,7 +265,7 @@ export const addStudyResults = async (req, res, next) => {
 			usuario: appointment.paciente,
 			titulo,
 			mensaje,
-			tipo: 'resultados-estudios',
+			tipo: 'Resultados_Subidos',
 			turno: appointment._id,
 		});
 
