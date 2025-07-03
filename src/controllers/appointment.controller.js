@@ -91,7 +91,6 @@ export const createAppointment = async (req, res, next) => {
 			)} a las ${hora}.`,
 			tipo: 'Turno_Agendado',
 			turno: newAppointment._id,
-
 		});
 
 		res.status(201).json({
@@ -197,9 +196,9 @@ export const updateAppointmentStatus = async (req, res, next) => {
 			await Notification.create({
 				usuario: req.user.id,
 				titulo: 'Tu turno fue cancelado',
-				mensaje: `El turno previsto para el ${appointment.fecha.toLocaleDateString()} a las ${
-					appointment.hora
-				} fue cancelado.`,
+				mensaje: `El turno previsto para el ${moment(appointment.fecha).format(
+					'DD/MM/YYYY'
+				)} a las ${appointment.hora} fue cancelado.`,
 				tipo: 'Turno_Cancelado',
 				turno: appointment._id,
 			});
