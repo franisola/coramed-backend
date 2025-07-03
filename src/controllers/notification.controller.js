@@ -5,9 +5,13 @@ export const getNotifications = async (req, res, next) => {
 	try {
 		const notifications = await Notification.find({ usuario: req.user.id })
 			.sort({ createdAt: -1 })
-			.populate('turno')
-			// .populate('profesional', 'nombre apellido especialidad')
-			// .populate('paciente', 'nombreCompleto email');
+			.populate({
+				path: 'turno',
+				populate: {
+					path: 'profesional',
+					select: 'nombre apellido especialidad', // Selecciona los campos que necesitas
+				},
+			});
 
 		res.status(200).json(notifications);
 	} catch (error) {
