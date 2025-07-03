@@ -1,6 +1,7 @@
 import Appointment from '../models/appointment.model.js';
 import Professional from '../models/professional.model.js';
 import User from '../models/user.model.js';
+import Notification from '../models/notification.model.js';
 import { calculateBaseSchedules } from '../utils/validationUtils.js';
 import moment from 'moment';
 import 'moment/locale/es.js';
@@ -80,6 +81,16 @@ export const createAppointment = async (req, res, next) => {
 				hora,
 			},
 			action: 'confirmado',
+		});
+
+		await Notification.create({
+			usuario: req.user.id,
+			titulo: 'Nuevo turno confirmado',
+			mensaje: `Tu turno fue confirmado para el ${moment(fecha).format(
+				'DD/MM/YYYY'
+			)} a las ${hora}.`,
+			tipo: 'recordatorio',
+			turno: newAppointment._id,
 		});
 
 		res.status(201).json({
@@ -181,6 +192,16 @@ export const updateAppointmentStatus = async (req, res, next) => {
 				},
 				action: 'cancelado',
 			});
+
+			await Notification.create({
+				usuario: req.user.id,
+				titulo: 'Tu turno fue cancelado',
+				mensaje: `El turno previsto para el ${appointment.fecha.toLocaleDateString()} a las ${
+					appointment.hora
+				} fue cancelado.`,
+				tipo: 'estado-turno',
+				turno: appointment._id,
+			});
 		}
 
 		const updated = await Appointment.findById(appointmentId)
@@ -235,6 +256,17 @@ export const addStudyResults = async (req, res, next) => {
 	<p>Tu profesional ha subido resultados médicos a tu turno del <strong>${fechaLegible}</strong>.</p>
 	<p>Podés consultarlos en la app.</p>`
 		);
+
+		const titulo = 'Resultados médicos disponibles';
+		const mensaje = `Tu profesional subió nuevos estudios al turno del ${fechaLegible}.`;
+
+		await Notification.create({
+			usuario: appointment.paciente,
+			titulo,
+			mensaje,
+			tipo: 'resultados-estudios',
+			turno: appointment._id,
+		});
 
 		const updated = await Appointment.findById(appointmentId)
 			.populate('profesional', 'nombre apellido especialidad')

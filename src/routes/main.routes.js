@@ -5,6 +5,7 @@ import medicalInfoRoutes from "./medicalInfo.routes.js";
 import authRoutes from "./auth.routes.js";
 import appointmentRoutes from "./appointment.routes.js";
 import professionalRoutes from "./professional.routes.js";
+import notificationRoutes from "./notification.routes.js";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/health-insurance", healthInsuranceRoutes);
 router.use("/medical-info", medicalInfoRoutes);
 router.use("/appointments", appointmentRoutes);
 router.use("/professionals", professionalRoutes);
+router.use("/notifications", notificationRoutes);
 
 export default router;
