@@ -91,6 +91,7 @@ export const createAppointment = async (req, res, next) => {
 			)} a las ${hora}.`,
 			tipo: 'recordatorio',
 			turno: newAppointment._id,
+			
 		});
 
 		res.status(201).json({

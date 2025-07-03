@@ -6,8 +6,8 @@ export const getNotifications = async (req, res, next) => {
 		const notifications = await Notification.find({ usuario: req.user.id })
 			.sort({ createdAt: -1 })
 			.populate('turno', 'fecha hora profesional paciente')
-			.populate('profesional', 'nombre apellido especialidad')
-			.populate('paciente', 'nombreCompleto email');
+			// .populate('profesional', 'nombre apellido especialidad')
+			// .populate('paciente', 'nombreCompleto email');
 
 		res.status(200).json(notifications);
 	} catch (error) {
