@@ -5,7 +5,7 @@ export const getNotifications = async (req, res, next) => {
 	try {
 		const notifications = await Notification.find({ usuario: req.user.id })
 			.sort({ createdAt: -1 })
-			.populate('turno', 'fecha hora profesional paciente')
+			.populate('turno')
 			// .populate('profesional', 'nombre apellido especialidad')
 			// .populate('paciente', 'nombreCompleto email');
 
