@@ -23,7 +23,7 @@ const NotificationSchema = new mongoose.Schema(
     },
     tipo: {
       type: String,
-      enum: ['Turno_Agendado', 'Turno_Cancelado', 'Resultados_Subidos', 'otro'],
+      enum: ['Turno_Agendado', 'Turno_Cancelado', 'Resultados_Subidos', 'Recordatorio', 'Otro'],
       default: 'otro',
     },
     turno: {
