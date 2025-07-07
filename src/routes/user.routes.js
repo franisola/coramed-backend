@@ -25,8 +25,6 @@ router.put(
 	userController.updateUserProfile
 );
 
-router.post('/push-token', authRequired, userController.updatePushToken);
-
 // /**
 //  * @route DELETE /user/profile
 //  * @desc Delete the user's account

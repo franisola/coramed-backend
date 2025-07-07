@@ -1,43 +1,53 @@
 import cron from 'node-cron';
 import Appointment from '../models/appointment.model.js';
-import { sendPushNotification } from './pushNotification.js';
+import Notification from '../models/notification.model.js';
+import { sendAppointmentEmail } from './sendEmail.js'; // Asegurate que el path sea correcto
 import moment from 'moment';
 
-// Todos los días a las 9:00 AM
-cron.schedule('0 9 * * *', async () => {
+cron.schedule('* * * * *', async () => {
 	try {
-		const hoy = moment().startOf('day');
-		const mañana = moment(hoy).add(1, 'day');
+		const ahora = moment();
+		const dentroDe24Horas = moment().add(24, 'hours');
 
-		const desde = mañana.clone().startOf('day').toDate();
-		const hasta = mañana.clone().endOf('day').toDate();
-
-		// Buscar turnos del día siguiente que aún no hayan recibido notificación
 		const turnos = await Appointment.find({
-			fecha: { $gte: desde, $lte: hasta },
-			notificacion_enviada: false,
+			fecha: { $gte: ahora.toDate(), $lte: dentroDe24Horas.toDate() },
 			estado: 'Agendado',
 		}).populate('paciente');
 
+		let totalNuevas = 0;
+
 		for (const turno of turnos) {
-			const token = turno.paciente?.expoPushToken;
+			const yaExiste = await Notification.exists({
+				turno: turno._id,
+				tipo: 'Recordatorio',
+			});
 
-			if (token) {
-				await sendPushNotification(
-					token,
-					'Recordatorio de turno',
-					`Tenés un turno mañana a las ${turno.hora}.`,
-					turno._id
-				);
+			if (!yaExiste) {
+				// Crear notificación
+				await Notification.create({
+					usuario: turno.paciente._id,
+					titulo: 'Recordatorio de turno',
+					mensaje: `Tenés un turno agendado para el ${moment(turno.fecha).format('DD/MM/YYYY')} a las ${turno.hora}.`,
+					tipo: 'Recordatorio',
+					turno: turno._id,
+				});
 
-				// Marcar turno como notificado
-				turno.notificacion_enviada = true;
-				await turno.save();
+				// Enviar email si tiene dirección
+				if (turno.paciente.email) {
+					await sendAppointmentEmail({
+						to: turno.paciente.email,
+						subject: 'Recordatorio de turno médico',
+						appointment: turno,
+						action: 'recordado',
+					});
+				}
+
+				totalNuevas++;
 			}
 		}
 
-		console.log(`[CRON] Notificaciones de recordatorio enviadas: ${turnos.length}`);
+		console.log(`[CRON] Recordatorios creados y correos enviados: ${totalNuevas}`);
 	} catch (error) {
-		console.error('[CRON] Error al enviar notificaciones de turnos:', error.message);
+		console.error('[CRON] Error al procesar recordatorios:', error.message);
 	}
 });
