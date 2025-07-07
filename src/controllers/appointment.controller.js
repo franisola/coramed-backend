@@ -326,7 +326,7 @@ export const getUserAppointments = async (req, res, next) => {
 		});
 
 		res.status(200).json({
-			anteriores: pastAppointments,
+			anteriores: pastAppointments.reverse(),
 			proximos: upcomingAppointments,
 		});
 	} catch (error) {
