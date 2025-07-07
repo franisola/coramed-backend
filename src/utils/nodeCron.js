@@ -4,7 +4,7 @@ import Notification from '../models/notification.model.js';
 import { sendAppointmentEmail } from './sendEmail.js'; // Asegurate que el path sea correcto
 import moment from 'moment';
 
-cron.schedule('* * * * *', async () => {
+cron.schedule('0 * * * *', async () => {
 	try {
 		const ahora = moment();
 		const dentroDe24Horas = moment().add(24, 'hours');
