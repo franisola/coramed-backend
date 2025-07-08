@@ -220,9 +220,9 @@ export const addStudyResults = async (req, res, next) => {
 	try {
 		const { appointmentId } = req.params;
 		const { notas_medicas, resultados_estudios } = req.body;
-		const user = await User.findById(req.user.id);
-
+		
 		const appointment = await Appointment.findById(appointmentId);
+		const user = await User.findById(appointment.paciente);
 		if (!appointment) {
 			const error = new Error('Turno no encontrado');
 			error.statusCode = 404;
