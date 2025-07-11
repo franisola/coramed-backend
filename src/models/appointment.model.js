@@ -73,14 +73,15 @@ const AppointmentSchema = new mongoose.Schema(
 						trim: true,
 						validate: {
 							validator: function (v) {
-								// Acepta URLs que terminan en .pdf o .pdf con query params, o que contengan drive.google.com
+								// Acepta URLs que terminen en .pdf (con o sin query), Google Drive y Dropbox
 								return (
 									/^https?:\/\/.+\.pdf(\?.*)?$/.test(v) ||
-									v.includes('drive.google.com')
+									v.includes('drive.google.com') ||
+									(v.includes('dropbox.com') && v.includes('.pdf'))
 								);
 							},
 							message:
-								'El archivo debe ser una URL válida que termine en .pdf o un enlace de Google Drive',
+								'El archivo debe ser una URL válida que termine en .pdf, o un enlace de Google Drive o Dropbox',
 						},
 					},
 					fecha_carga: {
