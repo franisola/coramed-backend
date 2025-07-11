@@ -9,16 +9,12 @@ export const createAppointmentSchema = z.object({
 		.nonempty('La especialidad es obligatoria')
 		.max(100, 'La especialidad no puede tener más de 100 caracteres')
 		.trim(),
-
 	fecha: z.string().refine((fecha) => {
 		const inputDate = new Date(fecha);
 		const tomorrow = new Date();
 		tomorrow.setHours(0, 0, 0, 0);
 		tomorrow.setDate(tomorrow.getDate() + 1);
-		const inputYMD = inputDate.toISOString().slice(0, 10);
-		const tomorrowYMD = tomorrow.toISOString().slice(0, 10);
-
-		return inputYMD >= tomorrowYMD;
+		return inputDate >= tomorrow;
 	}, 'La fecha del turno debe ser a partir de mañana a las 00:00 horas'),
 	hora: z
 		.string()
